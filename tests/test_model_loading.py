@@ -99,3 +99,38 @@ def test_loads_of_different_models_never_overlap(monkeypatch):
 class _FakeModel:
     def eval(self):
         return self
+
+
+def test_acquire_waits_out_a_slow_first_load():
+    """The first boot downloads weights for minutes; requests must wait for the
+    pool, not fail after the 30 s contention timeout (seen on first Docker run)."""
+    pool = ModelPool(lambda: (time.sleep(0.5), "model")[1], pool_size=1, name="slow")
+    loader = threading.Thread(target=pool.initialize)
+    loader.start()
+    time.sleep(0.05)  # the preloader is mid-download
+    with pool.acquire(timeout=0.1) as replica:  # far shorter than the load
+        assert replica == "model"
+    loader.join()
+
+
+def test_acquire_loads_the_pool_itself_when_nothing_preloaded():
+    pool = ModelPool(lambda: "model", pool_size=2, name="lazy")
+    with pool.acquire() as replica:
+        assert replica == "model"
+
+
+def test_failed_load_raises_and_is_retried():
+    attempts = []
+
+    def flaky():
+        attempts.append(1)
+        if len(attempts) == 1:
+            raise OSError("network down")
+        return "model"
+
+    pool = ModelPool(flaky, pool_size=1, name="flaky")
+    with pytest.raises(OSError):
+        with pool.acquire():
+            pass
+    with pool.acquire() as replica:
+        assert replica == "model"
