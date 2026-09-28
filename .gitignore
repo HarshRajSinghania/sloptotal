@@ -30,10 +30,8 @@ data/
 *.swp
 *.swo
 
-# Claude (keep .claude/agents/ for project-level AI agents)
-.claude/**
-!.claude/agents/
-!.claude/agents/**
+# Local assistant settings (project guidance lives in AGENTS.md)
+.claude/
 
 # Models cache (downloaded on first run)
 models/

@@ -1,0 +1,37 @@
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      web:
+        patterns: ["fastapi", "uvicorn*", "starlette", "pydantic*", "jinja2", "python-multipart", "aiosqlite", "httpx", "trafilatura", "beautifulsoup4", "psutil"]
+      dev:
+        patterns: ["pytest*", "ruff"]
+    ignore:
+      # Model libraries move scores; bump them deliberately and re-run tests/eval/.
+      - dependency-name: "torch"
+      - dependency-name: "transformers"
+      - dependency-name: "tokenizers"
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: monthly
+    groups:
+      astro:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly

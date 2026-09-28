@@ -132,14 +132,22 @@ def main() -> int:
     drift = [r for r in rows if r["state"] in ("STALE", "not-cached")]
 
     if args.json:
-        print(json.dumps({"cache": str(root), "rows": rows, "drift": len(drift)}, indent=2))
+        print(
+            json.dumps(
+                {"cache": str(root), "rows": rows, "drift": len(drift)}, indent=2
+            )
+        )
     else:
         if not args.quiet:
             print(f"HF cache: {root}\n")
             print(f"{'model':50} {'state':12} {'local':14} {'remote':14} modified")
             print("-" * 108)
             for r in rows:
-                extra = f" (+{r['local_snapshots'] - 1} other snapshot)" if r["local_snapshots"] > 1 else ""
+                extra = (
+                    f" (+{r['local_snapshots'] - 1} other snapshot)"
+                    if r["local_snapshots"] > 1
+                    else ""
+                )
                 print(
                     f"{r['model'][:50]:50} {r['state']:12} "
                     f"{str(r['local'] or '-'):14} {str(r['remote'] or '-'):14} "

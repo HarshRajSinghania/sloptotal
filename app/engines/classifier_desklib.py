@@ -4,6 +4,7 @@ import torch.nn as nn
 from transformers import AutoTokenizer, AutoConfig, AutoModel, PreTrainedModel
 from app.engines.base import BaseEngine
 from app.schemas import EngineResult, score_to_engine_verdict
+from app.model_pool import LOAD_LOCK as _load_lock
 
 _MODEL_NAME = "desklib/ai-text-detector-v1.01"
 _model = None
@@ -46,10 +47,17 @@ class _DesklibAIDetectionModel(PreTrainedModel):
 def _load_model():
     global _model, _tokenizer
     if _model is None:
-        _tokenizer = AutoTokenizer.from_pretrained(_MODEL_NAME)
-        config = AutoConfig.from_pretrained(_MODEL_NAME)
-        _model = _DesklibAIDetectionModel.from_pretrained(_MODEL_NAME, config=config)
-        _model.eval()
+        with _load_lock:
+            if _model is None:
+                _tokenizer = AutoTokenizer.from_pretrained(_MODEL_NAME)
+                config = AutoConfig.from_pretrained(_MODEL_NAME)
+                model = _DesklibAIDetectionModel.from_pretrained(
+                    _MODEL_NAME, config=config
+                )
+                model.eval()
+                # Publish the model last: readers test it, so the tokenizer must
+                # already be set and the model already in eval mode when they see it.
+                _model = model
     return _model, _tokenizer
 
 

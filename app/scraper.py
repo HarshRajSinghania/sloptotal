@@ -1,4 +1,9 @@
+import asyncio
+import ipaddress
+import os
+import socket
 from dataclasses import dataclass
+from urllib.parse import urlparse
 
 import httpx
 import trafilatura
@@ -87,15 +92,66 @@ def extract_html_features(html: str) -> dict:
     }
 
 
-async def _fetch_html(url: str) -> str:
-    """Fetch raw HTML from a URL."""
+# Self-hosters scanning their own intranet can opt out of the private-address
+# guard; the public API must never fetch internal or cloud-metadata addresses.
+ALLOW_PRIVATE_URLS = os.getenv("SLOPTOTAL_ALLOW_PRIVATE_URLS", "").lower() in (
+    "1",
+    "true",
+    "yes",
+)
+MAX_HTML_BYTES = 5_000_000
+
+
+async def _check_public_url(url: str) -> None:
+    """Reject non-HTTP schemes and hosts that resolve to private addresses."""
+    parsed = urlparse(url)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        raise ValueError("Only http:// and https:// URLs can be scanned.")
+    if ALLOW_PRIVATE_URLS:
+        return
+    try:
+        infos = await asyncio.get_running_loop().getaddrinfo(
+            parsed.hostname, None, type=socket.SOCK_STREAM
+        )
+    except socket.gaierror:
+        raise ValueError(f"Could not resolve {parsed.hostname}.")
+    for info in infos:
+        addr = ipaddress.ip_address(info[4][0].split("%")[0])
+        if not addr.is_global:
+            raise ValueError("That URL points to a private network address.")
+
+
+async def _fetch(url: str) -> httpx.Response:
+    """GET a public URL, re-checking every redirect hop against the guard."""
     headers = {
         "User-Agent": "Mozilla/5.0 (compatible; SlopTotal/1.0; +https://sloptotal.com)"
     }
-    async with httpx.AsyncClient(follow_redirects=True, timeout=15.0) as client:
+
+    async def guard(request: httpx.Request) -> None:
+        await _check_public_url(str(request.url))
+
+    async with httpx.AsyncClient(
+        follow_redirects=True,
+        timeout=15.0,
+        max_redirects=5,
+        event_hooks={"request": [guard]},
+    ) as client:
         response = await client.get(url, headers=headers)
         response.raise_for_status()
-        return response.text
+        if len(response.content) > MAX_HTML_BYTES:
+            raise ValueError("Page is too large to scan.")
+        return response
+
+
+async def _fetch_html(url: str) -> str:
+    """Fetch raw HTML from a URL."""
+    return (await _fetch(url)).text
+
+
+async def fetch_page(url: str) -> tuple[str, dict[str, str], str]:
+    """Fetch a page, returning (html, response headers, final URL after redirects)."""
+    response = await _fetch(url)
+    return response.text, dict(response.headers), str(response.url)
 
 
 def _extract_text_from_html(html: str) -> str:
@@ -104,7 +160,7 @@ def _extract_text_from_html(html: str) -> str:
         html,
         include_comments=False,
         include_tables=False,
-        no_fallback=True,
+        fast=True,
     )
 
     if not text or len(text.strip()) < 50:
@@ -112,7 +168,7 @@ def _extract_text_from_html(html: str) -> str:
             html,
             include_comments=False,
             include_tables=False,
-            no_fallback=False,
+            fast=False,
         )
 
     if not text or len(text.strip()) < 50:

@@ -3,6 +3,7 @@ import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from app.engines.base import BaseEngine
 from app.schemas import EngineResult, score_to_engine_verdict
+from app.model_pool import LOAD_LOCK as _load_lock
 
 _MODEL_NAME = "hyunseoki/ReMoDetect-deberta"
 _model = None
@@ -13,9 +14,14 @@ _lock = threading.Lock()
 def _load_model():
     global _model, _tokenizer
     if _model is None:
-        _tokenizer = AutoTokenizer.from_pretrained(_MODEL_NAME)
-        _model = AutoModelForSequenceClassification.from_pretrained(_MODEL_NAME)
-        _model.eval()
+        with _load_lock:
+            if _model is None:
+                _tokenizer = AutoTokenizer.from_pretrained(_MODEL_NAME)
+                model = AutoModelForSequenceClassification.from_pretrained(_MODEL_NAME)
+                model.eval()
+                # Publish the model last: readers test it, so the tokenizer must
+                # already be set and the model already in eval mode when they see it.
+                _model = model
     return _model, _tokenizer
 
 

@@ -13,6 +13,9 @@ We will acknowledge receipt within 48 hours and aim to provide a fix within 7 da
 The following are in scope for security reports:
 
 - Backend API injection or authentication bypass
+- Server-side request forgery through URL or site scans (they must never reach
+  private, loopback or cloud-metadata addresses)
+- Malicious uploads (PDF / DOCX parsing)
 - Chrome extension permission escalation or data leakage
 - Data exfiltration from submitted text
 - Denial of service vectors
@@ -22,7 +25,6 @@ The following are in scope for security reports:
 ## Out of Scope
 
 - AI detection accuracy (false positives/negatives are not security issues)
-- Rate limiting bypass on the Cloudflare proxy (report to Cloudflare)
 - Vulnerabilities in upstream dependencies (report to those projects directly)
 
 ## Design Principles

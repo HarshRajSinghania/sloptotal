@@ -14,11 +14,10 @@
 <!-- List the key changes with file paths -->
 
 ## Testing
-- [ ] Backend import check passes
-- [ ] Frontend builds successfully (`cd frontend && npm run build`)
-- [ ] Tests pass (`pytest tests/ -x -v -k "not slow"`)
+- [ ] Unit tests pass (`pytest -q`)
+- [ ] `python scripts/smoke_test.py` passes against a running server
 - [ ] Manual testing performed
-- [ ] Evaluation run (`python tests/eval_dataset.py`) -- engine changes only
+- [ ] Before/after numbers from `tests/eval/` on both corpora -- engine or scoring changes only
 
 ## Checklist
 - [ ] Code follows project style (`ruff check` passes)

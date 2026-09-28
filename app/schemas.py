@@ -95,6 +95,11 @@ class SnippetBatchRequest(BaseModel):
     snippets: list[SnippetItem]
 
 
+class SiteScanRequest(BaseModel):
+    url: str = ""
+    include_text: bool = True
+
+
 class BatchUrlRequest(BaseModel):
     urls: list[str]
 

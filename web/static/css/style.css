@@ -380,6 +380,7 @@ main {
     padding: 24px 24px 28px;
 }
 .input-card--hero input[type="url"],
+.input-card--hero #site-input,
 .input-card--hero textarea {
     font-size: 16px;
     padding: 16px 18px;
@@ -389,6 +390,7 @@ main {
     transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
 .input-card--hero input[type="url"]:focus,
+.input-card--hero #site-input:focus,
 .input-card--hero textarea:focus {
     border-color: var(--ink);
     box-shadow: 0 0 0 3px rgba(26,26,24,0.08);
@@ -457,7 +459,7 @@ main {
 
 .input-card form { padding: 16px 20px 20px; }
 
-input[type="url"], textarea {
+input[type="url"], #site-input, textarea {
     width: 100%;
     padding: 12px 14px;
     background: #fff;
@@ -1278,6 +1280,70 @@ a.engine-card:hover .ec-name {
     font-family: var(--f-mono);
     font-weight: 300;
 }
+
+/* ============ FILE UPLOAD ============ */
+.upload-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+.upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: var(--slate);
+    border: 1px dashed var(--rule);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+}
+.upload-btn:hover { border-color: var(--c-accent); color: var(--c-accent); }
+#file-input:focus-visible + .upload-status,
+.upload-btn:focus-within { outline: 2px solid var(--c-accent); outline-offset: 2px; }
+.upload-status { font-size: 12px; color: var(--muted); font-family: var(--f-mono); }
+
+/* ============ SITE FINGERPRINTS ============ */
+.site-check {
+    margin: 0 0 28px;
+    padding: 16px 20px;
+    background: var(--cream);
+    border: 1px solid var(--rule-light);
+    border-left: 3px solid var(--rule);
+    border-radius: var(--radius);
+}
+.site-check.site-found { border-left-color: var(--c-accent); }
+.site-label {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    font-weight: 400;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin: 0 0 6px;
+}
+.site-verdict {
+    font-family: var(--f-display);
+    font-size: 24px;
+    color: var(--ink);
+    margin: 0 0 8px;
+}
+.site-found .site-verdict { color: var(--c-accent); }
+.site-evidence {
+    margin: 0 0 10px;
+    padding-left: 18px;
+    font-size: 13px;
+    color: var(--slate);
+}
+.site-evidence:empty { display: none; }
+.site-note { margin: 0; font-size: 12px; color: var(--muted); }
+.site-check--home { margin-top: 20px; }
+.site-full { margin: 0 0 10px; }
+.site-text { margin: 0 0 8px; font-size: 13px; color: var(--slate); }
+.site-tab-hint { margin: 10px 0 0; font-size: 13px; color: var(--dim); }
 
 /* ============ ENGINE RESULTS ============ */
 .engine-results {

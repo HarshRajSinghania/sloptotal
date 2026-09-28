@@ -9,6 +9,7 @@ from transformers import (
 )
 from app.engines.base import BaseEngine
 from app.schemas import EngineResult, score_to_engine_verdict
+from app.model_pool import LOAD_LOCK as _load_lock
 
 _MODEL_NAME = "SuperAnnotate/ai-detector-low-fpr"
 _BASE_NAME = "FacebookAI/roberta-large"
@@ -61,12 +62,19 @@ class _SuperAnnotateDetector(PreTrainedModel):
 def _load_model():
     global _model, _tokenizer
     if _model is None:
-        # The repo's config.json has no model_type, so the architecture cannot be
-        # inferred from it; take the base config and load the weights over it.
-        config = AutoConfig.from_pretrained(_BASE_NAME)
-        _tokenizer = AutoTokenizer.from_pretrained(_BASE_NAME)
-        _model = _SuperAnnotateDetector.from_pretrained(_MODEL_NAME, config=config)
-        _model.eval()
+        with _load_lock:
+            if _model is None:
+                # The repo's config.json has no model_type, so the architecture cannot be
+                # inferred from it; take the base config and load the weights over it.
+                config = AutoConfig.from_pretrained(_BASE_NAME)
+                _tokenizer = AutoTokenizer.from_pretrained(_BASE_NAME)
+                model = _SuperAnnotateDetector.from_pretrained(
+                    _MODEL_NAME, config=config
+                )
+                model.eval()
+                # Publish the model last: readers test it, so the tokenizer must
+                # already be set and the model already in eval mode when they see it.
+                _model = model
     return _model, _tokenizer
 
 

@@ -726,8 +726,6 @@ def _calculate_calibrated_score(
     else:
         confidence = "low"
 
-    others_avg = (tmr + bert + e5) / 3  # retained for the steps below
-
     # ── Step 2: Linguistic/formulaic signal ──
     # These detect AI-specific phrases ("delve", "multifaceted") and structural
     # patterns ("in today's rapidly evolving"). Pure regex, independent of ML.
@@ -793,11 +791,12 @@ def _calculate_full_calibrated_score(
     result_map: dict[str, "EngineResult"], text: str = ""
 ) -> tuple[float, str]:
     """
-    Calibrated scoring for the full 21-engine pipeline.
+    Calibrated scoring for the full 23-engine pipeline.
 
-    Uses the weighted average from ENGINE_WEIGHTS as a baseline, then applies
-    Fakespot-dominant correction, unanimous-high skepticism, and linguistic/
-    formulaic signal — the same calibration strategy as quick-score.
+    Blends the four unbiased classifiers (anchor) with the ENGINE_WEIGHTS
+    baseline, then applies skepticism gated on human markers, the no-markers
+    tiebreaker and the human-signal adjustment. Every step is derived from the
+    corpora in tests/eval/; see FINDINGS.md before changing any constant.
     """
     # Step 1: Compute weighted average baseline
     weighted_sum = 0.0

@@ -1,15 +1,18 @@
 # SlopTotal Architecture
 
-## Three-Module Design
-
-SlopTotal is organized into three independent modules:
+## Layout
 
 ```
 sloptotal/
 ├── app/          Backend (Python/FastAPI)
-├── web/          Web Frontend (Jinja2 + vanilla JS)
-└── extension/    Chrome Extension (Manifest V3)
+├── web/          Web UI (Jinja2 + vanilla JS), served by the backend
+├── tests/        Unit tests and the tests/eval/ accuracy harness
+└── scripts/      End-to-end smoke test, model drift check
 ```
+
+The Chrome extension lives in its own repository,
+[pablocaeg/sloptotal-extension](https://github.com/pablocaeg/sloptotal-extension),
+and talks to the JSON API.
 
 ### Backend (`app/`)
 
@@ -32,7 +35,9 @@ FastAPI application with hardware-aware auto-configuration.
 - `app/queue_manager.py` -- Request queuing with backpressure
 - `app/database.py` -- SQLite async storage for reports
 - `app/cache.py` -- Content hash-based caching
-- `app/scraper.py` -- URL content extraction
+- `app/scraper.py` -- URL fetching (rejects private/metadata addresses on every redirect hop) and main-content extraction
+- `app/site_fingerprints.py` -- AI app builder detection (Lovable, v0, Bolt, Base44, Replit, Same); see [docs/SITE_FINGERPRINTS.md](docs/SITE_FINGERPRINTS.md)
+- `app/documents.py` -- Text extraction from uploaded PDF / DOCX / TXT
 
 ### Web Frontend (`web/`)
 
@@ -44,15 +49,6 @@ Server-rendered Jinja2 templates with vanilla JavaScript.
 - `web/static/css/style.css` -- All styles (forensic lab aesthetic)
 - `web/static/js/app.js` -- Tab switching, queue-aware form submission, ticker
 - `web/static/js/report.js` -- SSE streaming, gauge animation, engine row updates
-
-### Chrome Extension (`extension/`)
-
-Manifest V3 extension for inline AI detection on Google and LinkedIn.
-
-- `extension/background.js` -- Service worker with LRU cache (500 entries, 1hr TTL)
-- `extension/content/google.js` -- SERP injection using `.g` and `.VwiC3b` selectors
-- `extension/content/linkedin.js` -- Feed injection on `.feed-shared-update-v2`
-- `extension/popup/` -- Settings UI with API URL, toggles, recent scans
 
 ---
 
@@ -78,16 +74,20 @@ Incoming request
 - Semaphore guards prevent overload (`_snippet_semaphore`, `_full_semaphore`)
 - `QueueManager` provides request queuing with ticket-based polling for web clients
 - 4 "hot" engines (BERT-RAID, E5, TMR, Fakespot) use `ModelPool` for thread-safe replica access
+- Every model load holds `model_pool.LOAD_LOCK`. transformers' `from_pretrained` is not thread-safe across models; concurrent loads (preloader plus first request) have left GPT-2's tied head randomly initialised. Lazy loaders use double-checked locking and publish the model only after the tokenizer is set and `eval()` has run.
 
 ### Scoring Calibration
 
-The final score is **not** a simple average. The calibration pipeline:
+The final score is **not** a simple average, and every step was derived from
+the corpora in `tests/eval/` (see `tests/eval/FINDINGS.md`):
 
-1. **Weighted baseline** -- ENGINE_WEIGHTS in config.py (based on MAGE + RAID evaluation)
-2. **Fakespot-dominant correction** -- Fakespot has the largest human/AI discrimination gap (32%)
-3. **Unanimous-high skepticism** -- When all ML classifiers score >0.85, linguistic/formulaic engines differentiate formal human text from AI
-4. **No-markers penalty** -- High ML score + zero AI linguistic markers = likely false positive
-5. **Human signal adjustment** -- Contractions, slang, first-person voice pull score down
+1. **Weighted baseline** -- `ENGINE_WEIGHTS` in config.py, proportional to each engine's Somers' D (2*AUC - 1) and scaled down by any bias against pre-1920 prose
+2. **Anchor on unbiased classifiers** -- Desklib, SuperAnnotate, E5 and ReMoDetect consensus is blended 60/40 with the full weighted set
+3. **Confidence from agreement** -- spread across independent engine families, not one engine's certainty
+4. **Skepticism only when earned** -- unanimous high classifier scores are damped only when the text carries human markers (contractions, first person, slang)
+5. **Human signal adjustment** -- those markers also pull the score down slightly
+
+Verdict bands (`SCORE_CLEAN` ... `SCORE_LIKELY_AI`) live only in config.py; the report page receives them from the template.
 
 ---
 
@@ -103,6 +103,15 @@ Browser POST /api/web/analyze
     → Browser receives report_id, opens /report/{id}
     → EventSource /api/stream/{id} yields SSE events as engines complete
     → Final SSE event: {done: true}
+```
+
+### Site check
+```
+Browser / client POST /api/scan/site {url}
+    → fetch_page(): guarded fetch, returns HTML, headers, final URL
+    → detect_builders(): host, header and HTML fingerprints per builder
+    → optional quick text score of the extracted main content
+    → {site: {builders, generator, verdict}, text: {...} | null}
 ```
 
 ### Snippet Scan (Chrome Extension)

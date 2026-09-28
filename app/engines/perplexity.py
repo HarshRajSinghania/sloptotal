@@ -5,6 +5,7 @@ from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 from app.engines.base import BaseEngine
 from app.schemas import EngineResult, score_to_engine_verdict
 from app.config import GPT2_MODEL
+from app.model_pool import LOAD_LOCK as _load_lock
 
 _model = None
 _tokenizer = None
@@ -14,9 +15,14 @@ _lock = threading.Lock()
 def _load_model():
     global _model, _tokenizer
     if _model is None:
-        _tokenizer = GPT2TokenizerFast.from_pretrained(GPT2_MODEL)
-        _model = GPT2LMHeadModel.from_pretrained(GPT2_MODEL)
-        _model.eval()
+        with _load_lock:
+            if _model is None:
+                _tokenizer = GPT2TokenizerFast.from_pretrained(GPT2_MODEL)
+                model = GPT2LMHeadModel.from_pretrained(GPT2_MODEL)
+                model.eval()
+                # Publish the model last: readers test it, so the tokenizer must
+                # already be set and the model already in eval mode when they see it.
+                _model = model
     return _model, _tokenizer
 
 

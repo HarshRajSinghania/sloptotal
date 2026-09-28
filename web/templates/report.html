@@ -36,6 +36,12 @@
     <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M6.5 11.5L3.7 11.5a3.2 3.2 0 010-6.4h2.8M9.5 4.5h2.8a3.2 3.2 0 010 6.4H9.5M5.3 8h5.4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
     {{ report.source }}
 </div>
+<section class="site-check" id="site-check" data-url="{{ report.source }}" aria-labelledby="site-heading" hidden>
+    <h2 id="site-heading" class="site-label">Site fingerprints</h2>
+    <p class="site-verdict"></p>
+    <ul class="site-evidence"></ul>
+    <p class="site-note">Checks for markers left by AI app builders (Lovable, v0, Bolt, Base44, Replit, Same). No marker does not mean hand-written code.</p>
+</section>
 {% endif %}
 
 <section class="engine-results" aria-labelledby="breakdown-heading">
@@ -87,6 +93,6 @@
     </button>
 </div>
 
-<div id="report-data" data-report-id="{{ report.id }}" data-engines-total="{{ report.engines_total }}" style="display:none;"></div>
+<div id="report-data" data-report-id="{{ report.id }}" data-engines-total="{{ report.engines_total }}" data-bands="{{ bands|join(',') }}" style="display:none;"></div>
 <script src="/static/js/report.js"></script>
 {% endblock %}
