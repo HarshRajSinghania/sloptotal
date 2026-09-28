@@ -1,0 +1,51 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Lexend:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1a1a18;--paper:#f5f0e8;--cream:#faf6ee;--slate:#3d3b37;--dim:#7a756b;--rule:#cdc6b8;--red:#b5282e;--redm:#d4878a;--green:#2d8a4e;--warn:#c98b1d}
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1280px;height:400px;background:var(--ink);overflow:hidden;font-family:Lexend,sans-serif;position:relative}
+body:before{content:"";position:absolute;inset:0;background:radial-gradient(900px 420px at 18% 30%,rgba(181,40,46,.22),transparent 60%),radial-gradient(700px 400px at 95% 120%,rgba(245,240,232,.07),transparent 60%)}
+.grain{position:absolute;inset:0;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.rule{position:absolute;left:0;right:0;bottom:0;height:6px;background:var(--red)}
+.left{position:absolute;left:72px;top:58px;width:640px}
+.logo{display:flex;align-items:baseline;gap:4px}
+.slop{font-family:"Instrument Serif",serif;font-style:italic;font-size:64px;color:#fff;letter-spacing:.02em;line-height:1}
+.total{font-family:"DM Mono",monospace;font-weight:500;font-size:26px;color:var(--redm);letter-spacing:.16em;position:relative;top:-4px}
+h1{margin-top:26px;font-family:"Instrument Serif",serif;font-weight:400;font-size:50px;line-height:1.02;color:var(--paper)}
+h1 em{color:#e0656b}
+.sub{margin-top:18px;font-family:"DM Mono",monospace;font-size:16px;letter-spacing:.06em;color:#b9b2a5}
+.sub b{color:var(--paper);font-weight:500}
+.card{position:absolute;right:64px;top:46px;width:430px;height:306px;background:var(--cream);border-radius:10px;box-shadow:0 30px 60px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.06);padding:22px 24px;transform:rotate(-1.2deg)}
+.top{display:flex;gap:18px;align-items:center}
+.gauge{width:96px;height:96px;position:relative}
+.gauge svg{transform:rotate(-90deg)}
+.gauge span{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:"Instrument Serif",serif;font-style:italic;font-size:32px;color:var(--red);line-height:1}
+.gauge small{font-family:"DM Mono",monospace;font-style:normal;font-size:11px;color:var(--dim);margin-top:2px}
+.status{font-family:"DM Mono",monospace;font-size:11px;letter-spacing:.14em;color:var(--green)}
+.verdict{font-family:"Instrument Serif",serif;font-size:32px;color:var(--red);line-height:1.1}
+.flag{font-size:12px;color:var(--slate)}
+.rows{margin-top:16px;border-top:1px solid var(--rule)}
+.row{display:grid;grid-template-columns:150px 1fr 52px;align-items:center;gap:12px;padding:8.5px 0;border-bottom:1px solid #e4ddd0;font-size:13px;color:var(--slate)}
+.bar{height:6px;background:#e4ddd0;border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:3px}
+.pct{font-family:"DM Mono",monospace;font-size:12px;text-align:right;color:var(--slate)}
+</style></head><body><div class="grain"></div>
+<div class="left">
+  <div class="logo"><span class="slop">SLOP</span><span class="total">TOTAL</span></div>
+  <h1>Is it AI slop?<br>Ask <em>23 detectors</em> at once.</h1>
+  <p class="sub"><b>Open-source</b> AI text detector · self-hosted · runs on CPU</p>
+</div>
+<div class="card">
+  <div class="top">
+    <div class="gauge"><svg width="96" height="96" viewBox="0 0 96 96"><circle cx="48" cy="48" r="41" fill="none" stroke="#e4ddd0" stroke-width="7"/><circle cx="48" cy="48" r="41" fill="none" stroke="#b5282e" stroke-width="7" stroke-linecap="round" stroke-dasharray="216.7 257.6"/></svg><span>84.1<small>/ 100</small></span></div>
+    <div><div class="status">● COMPLETE</div><div class="verdict">Slop detected</div><div class="flag"><b>16</b> / 23 engines flagged this content</div></div>
+  </div>
+  <div class="rows">
+    <div class="row">SuperAnnotate<div class="bar"><i style="width:99.9%;background:var(--red)"></i></div><span class="pct">99.9%</span></div>
+    <div class="row">TMR Detector<div class="bar"><i style="width:98.7%;background:var(--red)"></i></div><span class="pct">98.7%</span></div>
+    <div class="row">ReMoDetect<div class="bar"><i style="width:98.4%;background:var(--red)"></i></div><span class="pct">98.4%</span></div>
+    <div class="row">Perplexity<div class="bar"><i style="width:68.9%;background:var(--red)"></i></div><span class="pct">68.9%</span></div>
+    <div class="row">Fast-DetectGPT<div class="bar"><i style="width:39.6%;background:var(--green)"></i></div><span class="pct">39.6%</span></div>
+  </div>
+</div>
+<div class="rule"></div></body></html>

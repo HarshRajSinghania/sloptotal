@@ -272,3 +272,50 @@ models, which is what production does after every deploy.
 After the fixes (double-checked loading, one process-wide `LOAD_LOCK`), three
 cold starts each hit with the corpus during warm-up reproduce the baseline
 exactly.
+
+## Newer open detectors, measured standalone
+
+Seven openly licensed classifiers published since the engine set was chosen,
+scored on their own (`candidate_models.py`, inputs truncated to 512 tokens)
+against a fresh RAID sample (180 texts: 40 human, 140 AI from GPT-4, ChatGPT,
+Llama, Mistral; `build_raid_parquet.py`) and the 26 classics. Raw scores:
+`results-candidates-20260928.json`.
+
+| model | trained on | params | RAID AUC | classics mean | classics > 0.5 | modern human > 0.5 | ms/text* |
+|---|---|---|---|---|---|---|---|
+| ShantanuT01/gradient-ai-text-detector (DeBERTa-v3-large) | DACTYL, LLMTrace, MAGA | 435M | **0.998** | **0.033** | 0/26 | **1/40** | 1150 |
+| ShantanuT01/vanguard-ai-text-detector (ModernBERT-large) | DACTYL, LLMTrace, MAGA | 396M | 0.998 | 0.037 | 0/26 | 12/40 | 1353 |
+| tabularisai/ai-text-detection (ModernBERT-base) | RAID + 6 sets | 150M | 1.000† | 0.117 | 2/26 | 0/40 | 661 |
+| GeorgeDrayson/modernbert-ai-detection-raid-mage | RAID, MAGE | 150M | 0.998† | 0.216 | 4/26 | 6/40 | 593 |
+| AICodexLab/answerdotai-ModernBERT-base-ai-detector | DAIGT v2 | 150M | 0.930 | 0.001 | 0/26 | 24/40 | 781 |
+| noumenon-labs/Earlybird-fast (DistilRoBERTa) | Mega-WORM | 82M | 0.913 | 0.040 | 1/26 | 5/40 | **84** |
+| rasbt/ai-text-detector-modernbert | human-vs-ai-50k | 150M | 0.864 | 0.000 | 0/26 | 2/40 | 525 |
+
+\* CPU, 6 threads, measured while the machine was also serving the reference
+run, so compare latencies relative to each other only.
+† Trained on RAID, so a RAID corpus flatters it (the same caveat as TMR).
+
+For reference, on the same 180 texts the current engines score: TMR 1.000†,
+Fakespot 0.999 (classics mean 0.645), E5 0.999, Desklib 0.996 (0.020),
+SuperAnnotate 0.994 (0.002); the full ensemble 0.979, with 1 of 40 human texts
+above "Likely AI". The ensemble's AUC sits below its best members by design:
+weights are scaled down for literary bias, trading a little RAID ranking for
+not accusing old prose.
+
+**Conclusions.**
+
+- **Gradient** is the strongest addition: near-perfect ranking on data it was
+  not trained on, no literary bias, and the lowest false-positive count at 0.5.
+  Next step is to add it as an engine and re-derive the weights on both corpora.
+- **Vanguard** ranks as well but is badly calibrated at 0.5 (12/40 human texts
+  over it); usable as an engine because weights use rank, not the threshold.
+- **Earlybird** is the fastest reasonable model (84 ms) and a candidate for
+  the snippet path used by the browser extension.
+- The two RAID-trained models cannot be judged on RAID; they need an
+  out-of-distribution corpus before adding.
+- Not measured: `yaoandy107/greyscope-qwen3.5-4b` (CC-BY-NC-SA, incompatible
+  with commercial self-hosting), `vraj33/ai-text-detector-deberta` (no
+  license), `distil-labs/distil-ai-slop-detector-gemma` (a prompted LLM, needs a
+  generation harness).
+- Some checkpoints ship bfloat16 weights, which ran at ~9 s per text on this
+  CPU; any engine built on them must cast to float32.

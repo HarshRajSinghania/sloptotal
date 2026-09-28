@@ -1,16 +1,54 @@
+<p align="center">
+  <a href="https://sloptotal.com"><img src="docs/assets/banner.jpg" alt="SlopTotal: open-source AI text detector that runs 23 detection engines on your own hardware" width="100%"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/pablocaeg/sloptotal/actions/workflows/ci.yml"><img src="https://github.com/pablocaeg/sloptotal/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/pablocaeg/sloptotal/releases"><img src="https://img.shields.io/github/v/release/pablocaeg/sloptotal?color=b5282e" alt="Latest release"></a>
+  <a href="https://github.com/pablocaeg/sloptotal/pkgs/container/sloptotal"><img src="https://img.shields.io/badge/docker-ghcr.io-1a1a18?logo=docker&logoColor=white" alt="Docker image"></a>
+  <img src="https://img.shields.io/badge/python-3.10%2B-3d3b37" alt="Python 3.10+">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2d8a4e" alt="MIT license"></a>
+  <a href="https://sloptotal.com"><img src="https://img.shields.io/badge/live%20demo-sloptotal.com-b5282e" alt="Live demo"></a>
+</p>
+
 # SlopTotal
 
-[![CI](https://github.com/pablocaeg/sloptotal/actions/workflows/ci.yml/badge.svg)](https://github.com/pablocaeg/sloptotal/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Website](https://img.shields.io/badge/website-sloptotal.com-blue)](https://sloptotal.com)
+**VirusTotal for AI-generated text.** Paste text, drop in a PDF or Word file, or
+give it a URL. Twenty-three independent AI detectors (neural classifiers,
+statistical tests and linguistic heuristics) score it in parallel, and a
+calibrated ensemble turns their votes into one verdict you can inspect engine by
+engine. It runs on your own CPU, so nothing you scan leaves your machine.
 
-**VirusTotal for AI slop detection.** Scan any text or URL with 23 independent detection engines running entirely on your hardware. No data sent to third parties.
+It is a free, self-hosted, open-source alternative to hosted AI content
+detectors such as GPTZero, Originality.ai, Copyleaks, ZeroGPT and Humalingo.
+Instead of one number from one model, it shows you every model's opinion, and
+it publishes how accurate that is, failures included.
 
-## What it does
+<p align="center">
+  <img src="docs/assets/demo.gif" alt="Pasting AI-written text into SlopTotal and watching 23 detection engines report in real time" width="820">
+</p>
 
-SlopTotal runs 23 AI detection engines in parallel -- neural classifiers, statistical tests, and linguistic heuristics -- and produces a calibrated forensic score. Results stream in real-time as each engine completes.
+**Try it:** [sloptotal.com](https://sloptotal.com) · **Run it:** `docker run -p 8000:8000 ghcr.io/pablocaeg/sloptotal`
 
-**Live demo:** [sloptotal.com](https://sloptotal.com) — or read the [per-engine scores](https://sloptotal.com/engines/) and [what the measurements show](https://sloptotal.com/detect/ai-detector-benchmark/).
+## Features
+
+- **23 detection engines, one calibrated score.** DeBERTa and RoBERTa
+  classifiers, Binoculars, Fast-DetectGPT, GLTR, perplexity and burstiness
+  tests, and stock-phrase heuristics. Results stream in as each engine finishes.
+- **Text, URLs and documents.** Paste text, scan a web page (main content is
+  extracted automatically), or upload `.pdf`, `.docx`, `.txt` or `.md`.
+- **Site check: was this website vibe-coded?** Finds the fingerprints that
+  Lovable, v0, Bolt, Base44, Replit and Same leave in the sites they deploy,
+  and shows the evidence for each one. [How it works](#site-check-detect-sites-built-with-ai-app-builders)
+- **Per-paragraph heat map** through the API, to see which parts read as AI.
+- **Measured, not claimed.** Every accuracy number below comes with the corpus,
+  the harness and the raw per-sample scores.
+- **Private by default.** Self-hosted, no third-party AI APIs, no tracking,
+  reports deleted after 30 days.
+- **CPU-only is fine.** Auto-detects your hardware; 4 GB RAM is enough for the
+  lite profile, a GPU is optional.
+- **JSON API and a [Chrome extension](https://github.com/pablocaeg/sloptotal-extension)**
+  that marks AI-looking results in Google Search and LinkedIn.
 
 ## Measured accuracy
 
@@ -36,6 +74,10 @@ corpus alone produces a threshold that mislabels literature.
 | Human text wrongly called "Likely AI" | 1 of 66 |
 | Literary passages flagged | **0 of 26** |
 
+Re-measured in September 2026 on a fresh RAID sample (180 texts) with upgraded
+dependencies: AUC 0.979, 1 of 40 human texts called "Likely AI", 0 of 26
+literary passages flagged.
+
 **What does not work.** Short text is unreliable below roughly 80 words and
 settles from about 200. Hand-edited AI loses fingerprints with every rewriting
 pass. Source code is outside what these engines do: in testing they never falsely
@@ -48,110 +90,90 @@ weight. Read them at
 [sloptotal.com/detect/ai-detector-benchmark/](https://sloptotal.com/detect/ai-detector-benchmark/)
 and [sloptotal.com/detect/ai-detector-false-positives/](https://sloptotal.com/detect/ai-detector-false-positives/).
 
-## Quick Start
+## Quick start
 
-### Requirements
-
-- **Python 3.10+** (3.11 recommended — macOS ships 3.9, which is too old)
-- **4 GB RAM** minimum (lite profile); **8 GB** standard; **16 GB+** for best CPU throughput
-- **No GPU required** — all engines run on CPU; CUDA optional for faster inference
-- ~2 GB disk for HuggingFace model cache on first run
-
-### Install
+### Docker (fastest)
 
 ```bash
-# Clone and install
+docker run -p 8000:8000 -v sloptotal-models:/app/models ghcr.io/pablocaeg/sloptotal
+```
+
+Open <http://localhost:8000>. The first scan downloads about 2 GB of models into
+the `sloptotal-models` volume, so later starts are quick. To build from source
+instead, run `docker compose up`.
+
+### From source
+
+Requires **Python 3.10+** (macOS ships 3.9, which is too old).
+
+```bash
 git clone https://github.com/pablocaeg/sloptotal.git
 cd sloptotal
-
-# Use Python 3.10+ explicitly (example: Homebrew on macOS)
 python3.11 -m venv venv && source venv/bin/activate
-pip install --upgrade pip
 pip install -r requirements.txt
-
-# Optional: copy env template
-cp .env.example .env
-
-# Start (auto-detects hardware, downloads models on first run)
-./start.sh
-# or manually:
-uvicorn app.main:app --host 0.0.0.0 --port 8000
+./start.sh            # or: uvicorn app.main:app --port 8000
 ```
 
-Open `http://localhost:8000` in your browser.
-
-> **Re-scanning the same URL?** Results are cached by content hash. After upgrading dependencies, stale failure reports are purged automatically on startup. Run a fresh scan if you previously saw "Model loading failed".
-
-### Docker
+Check that every engine loads and scores, end to end:
 
 ```bash
-docker compose up
+python scripts/smoke_test.py          # against http://localhost:8000
 ```
 
-## Architecture
+## Site check: detect sites built with AI app builders
 
-```
-sloptotal/
-├── app/                    # Backend (Python/FastAPI)
-│   ├── main.py             # App factory, lifespan, middleware
-│   ├── routes/
-│   │   ├── web.py          # Web page routes (/, /report, /analyze, SSE)
-│   │   ├── api.py          # JSON API (/api/quick-score, /api/analyze, etc.)
-│   │   └── queue.py        # Queue status & ticket polling
-│   ├── analyzer.py         # Core analysis orchestration & scoring
-│   ├── engines/            # 23 detection engines
-│   │   ├── base.py         # BaseEngine ABC
-│   │   └── ...             # One file per engine
-│   ├── config.py           # Configuration & engine weights
-│   ├── schemas.py          # Pydantic models
-│   ├── database.py         # SQLite async storage
-│   ├── cache.py            # Content hashing & caching
-│   ├── scraper.py          # URL content extraction
-│   ├── autoconfig.py       # Hardware detection & profiling
-│   ├── model_pool.py       # Thread-safe model replica pools
-│   └── queue_manager.py    # Request queuing & backpressure
-├── web/                    # Web Frontend
-│   ├── templates/          # Jinja2 templates
-│   └── static/             # CSS, JS, images
-├── extension/              # Chrome Extension (Manifest V3)
-│   ├── manifest.json
-│   ├── background.js
-│   ├── popup/
-│   └── content/
-└── tests/                  # Evaluation scripts
+<p align="center">
+  <img src="docs/assets/site-check.jpg" alt="SlopTotal Site check identifying a website built with Lovable from its asset paths and scripts" width="760">
+</p>
+
+"Is this website vibe-coded?" checkers mostly score style (Tailwind class
+counts, missing security headers, buzzwords) and turn it into a percentage.
+Hand-written sites share all of those traits. SlopTotal looks only for markers
+the builders themselves leave in what they deploy, each one confirmed on live
+sites or in the builders' own templates:
+
+| Builder | Fingerprints |
+|---|---|
+| Lovable | `gptengineer.js` runtime, `/lovable-uploads/` assets, the Lovable badge, `/~flock.js`, `*.lovable.app` |
+| v0 (Vercel) | `<meta name="generator" content="v0.app">` from v0's layout template, `*.vusercontent.net` |
+| Bolt | `X-Powered-By: Bolt.new` header, `bolt.new/badge.js`, `*.bolt.host` |
+| Base44 | `app.base44.com` platform calls, `base44_access_token`, `*.base44.app` |
+| Replit | Replit Agent dev banner, Replit badge, `*.replit.app` |
+| Same | assets served from `same-assets.com` |
+
+A site with no marker may still have been written with AI: code exported from
+these tools and hosted elsewhere, or written in an AI editor, carries no
+fingerprint. So the result is evidence, not a probability. The page's copy is
+scored separately by the text engines.
+
+```bash
+curl -X POST http://localhost:8000/api/scan/site \
+  -H "Content-Type: application/json" -d '{"url": "example.com"}'
 ```
 
-## API Endpoints
+## API
 
-| Endpoint | Method | Description | Latency |
-|----------|--------|-------------|---------|
-| `/api/quick-score` | POST | 6 engines (fast) | ~100-500ms |
-| `/api/paragraph-score` | POST | Per-paragraph heat map | ~1-3s |
-| `/api/scan/snippets` | POST | Batch scan (1-30 snippets) | ~500ms |
-| `/api/analyze` | POST | Full 23-engine analysis | ~3-8s |
+| Endpoint | Method | What it does | Typical latency (CPU) |
+|---|---|---|---|
+| `/api/analyze` | POST | Full 23-engine report for `text` or `url` | 2-8 s |
+| `/api/quick-score` | POST | 4 classifiers plus heuristics | 0.1-0.5 s |
+| `/api/paragraph-score` | POST | Score per paragraph (heat map) | 1-3 s |
+| `/api/scan/site` | POST | AI app builder fingerprints plus a copy score | 1-3 s |
+| `/api/extract` | POST | Text from an uploaded `.pdf` / `.docx` / `.txt` (multipart `file`) | < 1 s |
+| `/api/scan/snippets` | POST | Batch of 1-30 short snippets | ~0.5 s |
+| `/api/scan/urls` | POST | Batch of 1-10 URLs, page-type aware | 1-5 s |
 | `/api/engines` | GET | Engine metadata | instant |
-| `/api/recent` | GET | Recent reports | instant |
-| `/api/report/{id}` | GET | Full report data | instant |
+| `/api/report/{id}` | GET | A stored report | instant |
 | `/api/queue/status` | GET | Queue capacity | instant |
 
-### Quick Score Example
-
 ```bash
-curl -X POST http://localhost:8000/api/quick-score \
+curl -X POST http://localhost:8000/api/analyze \
   -H "Content-Type: application/json" \
   -d '{"text": "Your text to analyze here..."}'
 ```
 
-Response:
-```json
-{
-  "score": 72.3,
-  "verdict": "ai",
-  "confidence": "high",
-  "engines": [...],
-  "elapsed_ms": 340.2
-}
-```
+The response lists every engine with its score, verdict and a plain-language
+detail line, plus `overall_score` (0-100) and `overall_verdict`.
 
 ## Detection Engines
 
@@ -223,9 +245,10 @@ human writing -- the largest bias of any engine -- and anchoring amplified it.
 Machiavelli scored 62.5. After demotion to 0.033, literary passages average 10.2
 and none is flagged.
 
-## Hardware Requirements
+## Configuration
 
-SlopTotal auto-detects CPU, RAM, and GPU on startup and picks a profile (`lite`, `standard`, or `performance`).
+SlopTotal detects CPU, RAM and GPU at startup and picks a profile. Everything
+can be overridden with environment variables; see [`.env.example`](.env.example).
 
 | Profile | RAM | CPU | GPU | Notes |
 |---------|-----|-----|-----|-------|
@@ -247,96 +270,102 @@ export SLOPTOTAL_POOL_TMR=2
 ./start.sh
 ```
 
-First full scan downloads ~2 GB of models and may take 1–2 minutes while weights load; subsequent scans are much faster.
+| Variable | Default | Purpose |
+|---|---|---|
+| `SLOPTOTAL_PROFILE` | auto | `lite`, `standard` or `performance` |
+| `SLOPTOTAL_RETENTION_DAYS` | `30` | Delete reports after N days (`0` keeps them) |
+| `SLOPTOTAL_ALLOW_PRIVATE_URLS` | off | Let URL scans reach private or intranet hosts (blocked by default) |
+| `HF_HOME` | `./models` | Where model weights are cached |
 
-Hardware is auto-detected on startup. Override with environment variables:
+## FAQ
 
-```bash
-SLOPTOTAL_TORCH_THREADS=4
-SLOPTOTAL_FULL_WORKERS=6
-SLOPTOTAL_SNIPPET_WORKERS=4
-SLOPTOTAL_MAX_CONCURRENT_FULL=3
-```
+**Can AI detectors be trusted?** Not blindly. No detector, this one included,
+should be the only evidence for an accusation. That is why SlopTotal shows
+all 23 votes, how much they agree, and its measured false-positive rate. Short
+text (under about 80 words) and heavily edited AI text are unreliable for every
+detector.
+
+**Does it detect ChatGPT, Claude, Gemini, Llama and Mistral?** The evaluation
+corpus includes GPT-4, ChatGPT, Llama and Mistral output. The classifiers were
+trained on a wider mix. Newer models are covered as far as they share those
+fingerprints; the [evaluation harness](tests/eval/) lets you measure any model
+you care about.
+
+**Will it flag classic literature or formal writing?** Not in our tests: none
+of the 26 passages from Austen, Melville, Kafka, Machiavelli and others is
+flagged. Pre-1920 prose is part of the evaluation precisely because naive
+detectors fail on it.
+
+**Is my text stored or shared?** It is processed on the server you run. Reports
+are kept for 30 days (configurable) so report links work, and nothing is sent
+to an outside service.
+
+**Can it detect AI-generated code?** No, and we do not claim it can: in testing
+the engines never flagged human code but never caught machine-written code
+either. The Site check reports which AI app builder produced a website, which is
+a different question.
 
 ## Troubleshooting
 
-| Symptom | Cause | Fix |
-|---------|-------|-----|
-| `TypeError: unsupported operand type(s) for \|` on startup | Python 3.9 or older | Use Python 3.10+ (`python3.11 -m venv venv`) |
-| `ModuleNotFoundError: No module named 'bs4'` | Missing dependency | `pip install -r requirements.txt` (includes `beautifulsoup4`) |
-| `Model loading failed` / tokenizer enum errors | Outdated `tokenizers` (<0.19) | `pip install -U 'transformers>=4.46' 'tokenizers>=0.21'` and restart |
-| Old scans still show engine failures | Cached report from before fix | Restart server (auto-purges stale cache) and run a **new** scan |
-| Engines stuck on "PENDING" in UI | Viewing an old report URL | Go to `/` and submit a fresh analysis |
+| Symptom | Fix |
+|---|---|
+| `TypeError: unsupported operand type(s) for \|` at startup | Python 3.9 or older; use 3.10+ |
+| An engine reports `Model loading failed` | Check disk space and network for the first model download, then restart; `python scripts/smoke_test.py` shows which engine fails |
+| First scan is slow | Models are loading; later scans take seconds |
+| A URL scan says "private network address" | Intended; set `SLOPTOTAL_ALLOW_PRIVATE_URLS=1` to scan intranet pages |
 
-Verify all engines loaded:
-
-```bash
-curl -s http://localhost:8000/health | python3 -m json.tool
-# Expect: "status": "healthy", "engines": 23
-```
-
-## Roadmap
-
-See [TODO.md](TODO.md) for planned engines — including **Qwen** and **Gemma** classifiers and perplexity models optimized for high-RAM CPU servers.
-
-## Related Projects & Reading
-
-**Similar tools**
-- [distil-labs/distil-ai-slop-detector](https://github.com/distil-labs/distil-ai-slop-detector) — 270M Gemma model, runs in the browser
-- [Flamehaven01/AI-SLOP-Detector](https://github.com/Flamehaven01/AI-SLOP-Detector) — static analyzer for AI-generated *code* (complementary to text detection)
-- [GLTR](http://gltr.io/) — visual token-rank inspection (inspiration for our GLTR engine)
-
-**Papers & benchmarks**
-- [RAID benchmark](https://arxiv.org/abs/2405.07940) (ACL 2024) — adversarial AI text detection dataset; several SlopTotal engines are RAID-trained
-- [Detecting the Machine (2026)](https://arxiv.org/pdf/2603.17522) — cross-architecture detector benchmark; ensemble methods outperform single detectors
-- [EditLens / Greyscope](https://arxiv.org/abs/2510.03154) — human vs. AI-edited vs. AI-generated classification (candidate Qwen engine)
-
-**Guides**
-- [Detecting AI Slop: Techniques & Red Flags](https://www.glukhov.org/post/2025/12/ai-slop-detection/) — perplexity, classifiers, and ensemble approaches
-
-## Chrome Extension
-
-The SlopTotal Chrome extension is maintained as a **separate open-source repository**:
-
-**[pablocaeg/sloptotal-extension](https://github.com/pablocaeg/sloptotal-extension)**
-
-Features:
-- Scans Google search results inline with AI probability badges
-- Scans LinkedIn feed posts with AI detection
-- Quick-score popup for any page or selected text
-- Right-click context menu integration
-- Configurable API — point at any SlopTotal backend
-
-Install from the [extension repo](https://github.com/pablocaeg/sloptotal-extension) or load `extension/` as an unpacked extension for development.
-
-## AI Agents
-
-This project ships with **11 specialized AI agents** that can autonomously navigate, build, test, review, and ship contributions. They work with any AI coding assistant — Claude Code, Cursor, GitHub Copilot, ChatGPT, Gemini, Windsurf, or programmatic API calls. Anyone who clones this repo gets access to them automatically.
+## Project layout
 
 ```
-sloptotal-expert          # Understand the codebase
-sloptotal-completionist   # Find what's missing or broken
-sloptotal-feature-builder # Build new engines, endpoints, pages
-sloptotal-test-writer     # Create tests with proper patterns
-sloptotal-reviewer        # Code review before PR
-sloptotal-optimizer       # Performance, SEO, accessibility
-sloptotal-deployer        # CI/CD and deployment
-sloptotal-open-source     # GitHub templates and discoverability
-sloptotal-extension-extractor  # Extract extension to its own repo
-sloptotal-pr-creator      # Git workflow and PR creation
-sloptotal-contribute      # Master orchestrator for end-to-end workflows
+app/            FastAPI backend: engines, ensemble, site fingerprints, API
+web/            The web UI (Jinja2 templates, vanilla JS, no build step)
+tests/          Unit tests (seconds, no downloads) and tests/eval/ accuracy harness
+scripts/        smoke_test.py (end-to-end) and the model drift check
+benchmarks/     Speed and load scripts
 ```
 
-See [docs/ai-agents/](docs/ai-agents/) for full documentation, workflow pipelines, and usage examples.
+[ARCHITECTURE.md](ARCHITECTURE.md) covers the internals. [AGENTS.md](AGENTS.md)
+is a short brief for contributors and AI coding assistants.
+
+## Newer open detectors we measured
+
+Detector models keep appearing on Hugging Face, each with its own accuracy
+claim. Before adding any, we score them on the same two corpora. September 2026,
+standalone, 180 RAID texts plus the 26 literary passages:
+
+| Model | RAID AUC | Literary bias (lower is better) | Status |
+|---|---|---|---|
+| [Gradient](https://huggingface.co/ShantanuT01/gradient-ai-text-detector) (DeBERTa-v3-large) | 0.998 | 0.033 | Next engine to add |
+| [Vanguard](https://huggingface.co/ShantanuT01/vanguard-ai-text-detector) (ModernBERT-large) | 0.998 | 0.037 | Candidate; poorly calibrated at 0.5 |
+| [Earlybird-fast](https://huggingface.co/noumenon-labs/Earlybird-fast) (82M) | 0.913 | 0.040 | Candidate for fast snippet scans |
+| [rasbt ModernBERT](https://huggingface.co/rasbt/ai-text-detector-modernbert) | 0.864 | 0.000 | Not added |
+
+RAID-trained models score near 1.0 on RAID by construction and need a different
+test set first. The full table, the models we excluded and why, and the raw
+scores are in [tests/eval/FINDINGS.md](tests/eval/FINDINGS.md#newer-open-detectors-measured-standalone).
+The roadmap is in [TODO.md](TODO.md).
+
+## Related projects and reading
+
+- [RAID benchmark](https://arxiv.org/abs/2405.07940) (ACL 2024): adversarial AI text detection dataset used in our evaluation
+- [Detecting the Machine (2026)](https://arxiv.org/pdf/2603.17522): cross-architecture detector benchmark; ensembles beat single detectors
+- [EditLens](https://arxiv.org/abs/2510.03154): human vs AI-edited vs AI-generated classification
+- [GLTR](http://gltr.io/): visual token-rank inspection, the inspiration for our GLTR engine
+- [distil-labs/distil-ai-slop-detector](https://github.com/distil-labs/distil-ai-slop-detector): a 270M Gemma detector that runs in the browser
+- [sloptotal-extension](https://github.com/pablocaeg/sloptotal-extension): the Chrome extension
 
 ## Contributing
 
-Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style, and how to add new detection engines.
+Contributions are welcome, especially new engines with measurements. Start with
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
-- [Bug Report](https://github.com/pablocaeg/sloptotal/issues/new?template=bug_report.yml)
-- [Feature Request](https://github.com/pablocaeg/sloptotal/issues/new?template=feature_request.yml)
-- [Propose a New Engine](https://github.com/pablocaeg/sloptotal/issues/new?template=new_engine.yml)
+- [Report a bug](https://github.com/pablocaeg/sloptotal/issues/new?template=bug_report.yml)
+- [Request a feature](https://github.com/pablocaeg/sloptotal/issues/new?template=feature_request.yml)
+- [Propose a new engine](https://github.com/pablocaeg/sloptotal/issues/new?template=new_engine.yml)
+
+If SlopTotal is useful to you, a star helps other people find it.
 
 ## License
 
-MIT
+MIT. Model weights keep their own licenses; see
+[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
