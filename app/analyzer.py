@@ -726,8 +726,6 @@ def _calculate_calibrated_score(
     else:
         confidence = "low"
 
-    others_avg = (tmr + bert + e5) / 3  # retained for the steps below
-
     # ── Step 2: Linguistic/formulaic signal ──
     # These detect AI-specific phrases ("delve", "multifaceted") and structural
     # patterns ("in today's rapidly evolving"). Pure regex, independent of ML.
