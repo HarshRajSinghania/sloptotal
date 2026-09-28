@@ -7,6 +7,7 @@ from app.schemas import EngineResult, score_to_engine_verdict
 
 # DistilGPT-2 as a second, smaller model
 _distil_model = None
+_load_lock = threading.Lock()
 _distil_tokenizer = None
 _distil_lock = threading.Lock()
 
@@ -14,9 +15,14 @@ _distil_lock = threading.Lock()
 def _load_distil_model():
     global _distil_model, _distil_tokenizer
     if _distil_model is None:
-        _distil_tokenizer = GPT2TokenizerFast.from_pretrained("distilgpt2")
-        _distil_model = GPT2LMHeadModel.from_pretrained("distilgpt2")
-        _distil_model.eval()
+        with _load_lock:
+            if _distil_model is None:
+                _distil_tokenizer = GPT2TokenizerFast.from_pretrained("distilgpt2")
+                model = GPT2LMHeadModel.from_pretrained("distilgpt2")
+                model.eval()
+                # Publish the model last: readers test it, so the tokenizer must
+                # already be set and the model already in eval mode when they see it.
+                _distil_model = model
     return _distil_model, _distil_tokenizer
 
 

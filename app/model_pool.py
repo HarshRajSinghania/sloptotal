@@ -2,6 +2,7 @@
 
 import logging
 import queue
+import threading
 from contextlib import contextmanager
 from typing import Any, Callable
 
@@ -20,9 +21,18 @@ class ModelPool:
         self._load_fn = load_fn
         self._pool_size = pool_size
         self._name = name
+        self._init_lock = threading.Lock()
+        self._initialized = False
 
     def initialize(self) -> None:
-        """Pre-load all replicas (call at startup)."""
+        """Pre-load all replicas (call at startup). Safe to call more than once."""
+        with self._init_lock:
+            if self._initialized:
+                return
+            self._load_all()
+            self._initialized = True
+
+    def _load_all(self) -> None:
         for i in range(self._pool_size):
             try:
                 replica = self._load_fn()

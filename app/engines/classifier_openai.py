@@ -8,14 +8,20 @@ _MODEL_NAME = "roberta-base-openai-detector"
 _model = None
 _tokenizer = None
 _lock = threading.Lock()
+_load_lock = threading.Lock()  # guards first load; _lock guards inference
 
 
 def _load_model():
     global _model, _tokenizer
     if _model is None:
-        _tokenizer = AutoTokenizer.from_pretrained(_MODEL_NAME)
-        _model = AutoModelForSequenceClassification.from_pretrained(_MODEL_NAME)
-        _model.eval()
+        with _load_lock:
+            if _model is None:
+                _tokenizer = AutoTokenizer.from_pretrained(_MODEL_NAME)
+                model = AutoModelForSequenceClassification.from_pretrained(_MODEL_NAME)
+                model.eval()
+                # Publish the model last: readers test it, so the tokenizer must
+                # already be set and the model already in eval mode when they see it.
+                _model = model
     return _model, _tokenizer
 
 

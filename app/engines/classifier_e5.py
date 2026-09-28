@@ -11,9 +11,9 @@ _MODEL_NAME = "MayZhou/e5-small-lora-ai-generated-detector"
 _model = None
 _tokenizer = None
 _lock = threading.Lock()
+_load_lock = threading.Lock()  # guards first load; _lock guards inference
 
 _pool_size = int(os.getenv("SLOPTOTAL_POOL_E5", "1"))
-_pool: ModelPool | None = None
 
 
 def _load_one_replica():
@@ -25,13 +25,20 @@ def _load_one_replica():
     return m, t
 
 
+# Created at import so requests that arrive while the preloader is still filling
+# it block on acquire() instead of falling through to the unpooled path.
+_pool: ModelPool | None = (
+    ModelPool(_load_one_replica, pool_size=_pool_size, name="E5")
+    if _pool_size > 1
+    else None
+)
+
+
 def _init_pool():
     """Called by preloader to eagerly load replicas."""
-    global _pool
     if _pool_size <= 1:
         _load_model()
         return
-    _pool = ModelPool(_load_one_replica, pool_size=_pool_size, name="E5")
     _pool.initialize()
 
 
@@ -41,7 +48,11 @@ def _load_model():
     if _pool_size > 1:
         return None, None
     if _model is None:
-        _model, _tokenizer = _load_one_replica()
+        with _load_lock:
+            if _model is None:
+                model, tokenizer = _load_one_replica()
+                _tokenizer = tokenizer
+                _model = model
     return _model, _tokenizer
 
 
