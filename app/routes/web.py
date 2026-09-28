@@ -31,9 +31,9 @@ async def index(request: Request):
         recent = []
     engines = get_engine_list_rich()
     return templates.TemplateResponse(
+        request,
         "index.html",
         {
-            "request": request,
             "recent_reports": recent,
             "engines": engines,
         },
@@ -56,9 +56,9 @@ async def analyze_form(
             content = text.strip()
             if len(content) < 50:
                 return templates.TemplateResponse(
+                    request,
                     "index.html",
                     {
-                        "request": request,
                         "error": "Please provide at least 50 characters of text.",
                     },
                 )
@@ -67,26 +67,26 @@ async def analyze_form(
             )
         else:
             return templates.TemplateResponse(
+                request,
                 "index.html",
                 {
-                    "request": request,
                     "error": "Please provide a URL or paste some text to analyze.",
                 },
             )
     except ValueError as e:
         return templates.TemplateResponse(
+            request,
             "index.html",
             {
-                "request": request,
                 "error": str(e),
             },
         )
     except Exception as e:
         log.error(f"Analysis failed: {e}", exc_info=True)
         return templates.TemplateResponse(
+            request,
             "index.html",
             {
-                "request": request,
                 "error": f"Analysis failed: {e}",
             },
         )
@@ -189,9 +189,9 @@ async def report_page(request: Request, report_id: str):
         raise HTTPException(status_code=404, detail="Report not found")
     engines = get_engine_list()
     return templates.TemplateResponse(
+        request,
         "report.html",
         {
-            "request": request,
             "report": report,
             "engines": engines,
         },

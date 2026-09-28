@@ -104,7 +104,7 @@ def _extract_text_from_html(html: str) -> str:
         html,
         include_comments=False,
         include_tables=False,
-        no_fallback=True,
+        fast=True,
     )
 
     if not text or len(text.strip()) < 50:
@@ -112,7 +112,7 @@ def _extract_text_from_html(html: str) -> str:
             html,
             include_comments=False,
             include_tables=False,
-            no_fallback=False,
+            fast=False,
         )
 
     if not text or len(text.strip()) < 50:
