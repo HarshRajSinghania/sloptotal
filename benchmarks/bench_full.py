@@ -5,7 +5,7 @@ Comprehensive Engine Benchmark for Snippet Scoring
 Tests every engine combination, weighting strategy, text-length behavior,
 and scoring threshold to find the mathematically optimal configuration.
 
-Run: cd /root/sloptotal && source venv/bin/activate && python3 tests/bench_full.py
+Run: python benchmarks/bench_full.py
 """
 
 import sys

@@ -8,7 +8,7 @@ Tests with a diverse, balanced dataset:
 - Real Google snippet lengths (100-250ch)
 - Longer text (300-600ch) for Phase 2 URL scan simulation
 
-Run: cd /root/sloptotal && source venv/bin/activate && python3 tests/bench_realistic.py
+Run: python benchmarks/bench_realistic.py
 """
 
 import sys

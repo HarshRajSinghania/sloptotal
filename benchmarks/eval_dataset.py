@@ -453,9 +453,9 @@ async def main():
         "quick_score_metrics": quick_metrics,
         "snippet_metrics": snippet_metrics,
     }
-    with open("tests/eval_results.json", "w") as f:
+    with open("benchmarks/results/eval_results.json", "w") as f:
         json.dump(output, f, indent=2, default=str)
-    print(f"\nRaw results saved to tests/eval_results.json")
+    print(f"\nRaw results saved to benchmarks/results/eval_results.json")
 
     # Summary
     print(f"\n{'='*60}")

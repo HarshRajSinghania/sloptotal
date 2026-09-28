@@ -359,7 +359,7 @@ async def main():
         "scenarios": all_results,
         "system_final": system_snapshot(),
     }
-    path = "/root/sloptotal/tests/realistic_load_report.json"
+    path = "benchmarks/results/realistic_load_report.json"
     with open(path, "w") as f:
         json.dump(report, f, indent=2)
     print(f"\n  Full report: {path}")

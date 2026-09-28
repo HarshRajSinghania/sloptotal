@@ -6,14 +6,18 @@ with only 23 of 110 rows and produced a misleading mean, so failures must be
 retried and the final row count must be asserted by the caller.
 
 Usage: python run_any.py <input.json> <output.json>
+
+Set SLOPTOTAL_API to measure a local instance instead of production, e.g.
+SLOPTOTAL_API=http://localhost:8000/api/analyze
 """
 import json
+import os
 import sys
 import time
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
-API = "https://api.sloptotal.com/api/analyze"
+API = os.environ.get("SLOPTOTAL_API", "https://api.sloptotal.com/api/analyze")
 MAX_TRIES = 5
 
 inp, outp = sys.argv[1], sys.argv[2]

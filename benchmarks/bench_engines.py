@@ -7,7 +7,7 @@ Tests each batch-capable engine independently for:
   2. Accuracy on balanced AI/human snippets
   3. Best 1-engine and 2-engine combinations
 
-Run: cd /root/sloptotal && source venv/bin/activate && python3 tests/bench_engines.py
+Run: python benchmarks/bench_engines.py
 """
 
 import sys

@@ -378,7 +378,7 @@ async def main():
     print("=" * 64)
 
     # Save full report
-    report_path = "/root/sloptotal/tests/load_test_report.json"
+    report_path = "benchmarks/results/load_test_report.json"
     with open(report_path, "w") as f:
         json.dump(report, f, indent=2)
     print(f"\nFull report saved to {report_path}")

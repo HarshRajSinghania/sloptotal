@@ -8,7 +8,7 @@ Tests against challenging cases that expose real weaknesses:
   3. Hand-crafted edge cases (formal writing, short text, lightly edited AI)
 
 Usage:
-    PYTHONUNBUFFERED=1 python tests/eval_hard.py
+    PYTHONUNBUFFERED=1 python benchmarks/eval_hard.py
 """
 
 import asyncio
@@ -557,9 +557,9 @@ async def main():
         all_metrics["combined"] = analyze_results(all_results, "All Datasets Combined")
 
     # Save
-    with open("tests/eval_hard_results.json", "w") as f:
+    with open("benchmarks/results/eval_hard_results.json", "w") as f:
         json.dump(all_metrics, f, indent=2, default=str)
-    print(f"\nResults saved to tests/eval_hard_results.json")
+    print(f"\nResults saved to benchmarks/results/eval_hard_results.json")
 
     # Final summary
     print(f"\n\n{'='*60}")
@@ -625,7 +625,7 @@ async def main():
         if all_full:
             full_metrics["combined_full"] = analyze_results(all_full, "All Datasets: Full Pipeline Combined")
 
-        with open("tests/eval_hard_full_results.json", "w") as f:
+        with open("benchmarks/results/eval_hard_full_results.json", "w") as f:
             json.dump(full_metrics, f, indent=2, default=str)
 
         print(f"\n\n{'='*60}")

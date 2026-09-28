@@ -262,9 +262,9 @@ async def main():
                     print(f"  NEW BEST: F1={f1:.3f} steep={steepness} w={w:.2f} thresh={t:.2f}")
 
     # Dump raw data for further analysis
-    with open("tests/mage_diagnostic.json", "w") as f:
+    with open("benchmarks/results/mage_diagnostic.json", "w") as f:
         json.dump(results, f, indent=2)
-    print(f"\nRaw per-sample data saved to tests/mage_diagnostic.json")
+    print(f"\nRaw per-sample data saved to benchmarks/results/mage_diagnostic.json")
 
 
 if __name__ == "__main__":
