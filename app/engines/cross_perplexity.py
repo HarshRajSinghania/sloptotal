@@ -4,10 +4,10 @@ import torch
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 from app.engines.base import BaseEngine
 from app.schemas import EngineResult, score_to_engine_verdict
+from app.model_pool import LOAD_LOCK as _load_lock
 
 # DistilGPT-2 as a second, smaller model
 _distil_model = None
-_load_lock = threading.Lock()
 _distil_tokenizer = None
 _distil_lock = threading.Lock()
 

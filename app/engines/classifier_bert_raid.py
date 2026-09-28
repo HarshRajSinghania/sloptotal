@@ -6,12 +6,12 @@ from app.engines.base import BaseEngine
 from app.schemas import EngineResult, score_to_engine_verdict
 from app.model_pool import ModelPool
 from app.autoconfig import get_device
+from app.model_pool import LOAD_LOCK as _load_lock
 
 _MODEL_NAME = "ShantanuT01/BERT-tiny-RAID"
 _model = None
 _tokenizer = None
 _lock = threading.Lock()
-_load_lock = threading.Lock()  # guards first load; _lock guards inference
 
 _pool_size = int(os.getenv("SLOPTOTAL_POOL_BERT_RAID", "1"))
 

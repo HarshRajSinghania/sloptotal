@@ -3,12 +3,12 @@ import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 from app.engines.base import BaseEngine
 from app.schemas import EngineResult, score_to_engine_verdict
+from app.model_pool import LOAD_LOCK as _load_lock
 
 _MODEL_NAME = "roberta-base-openai-detector"
 _model = None
 _tokenizer = None
 _lock = threading.Lock()
-_load_lock = threading.Lock()  # guards first load; _lock guards inference
 
 
 def _load_model():

@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from app.engines import classifier_tmr
+from app.engines import classifier_fakespot, classifier_tmr, perplexity
 from app.model_pool import ModelPool
 
 
@@ -54,3 +54,48 @@ def test_pool_acquire_waits_for_initialization():
     t.join()
     assert got == ["model"]
     assert pool._pool.qsize() == 2
+
+
+def test_loads_of_different_models_never_overlap(monkeypatch):
+    """transformers' from_pretrained is not thread-safe across models: running
+    two at once can leave a tied lm_head randomly initialised."""
+    active, peak, lock = [0], [0], threading.Lock()
+
+    def tracked(value):
+        def load(*args, **kwargs):
+            with lock:
+                active[0] += 1
+                peak[0] = max(peak[0], active[0])
+            time.sleep(0.1)
+            with lock:
+                active[0] -= 1
+            return value
+
+        return load
+
+    for mod in (classifier_tmr, classifier_fakespot):
+        monkeypatch.setattr(mod, "_load_one_replica", tracked((object(), object())))
+        monkeypatch.setattr(mod, "_model", None)
+        monkeypatch.setattr(mod, "_tokenizer", None)
+        monkeypatch.setattr(mod, "_pool_size", 1)
+    monkeypatch.setattr(perplexity, "_model", None)
+    monkeypatch.setattr(
+        perplexity.GPT2TokenizerFast, "from_pretrained", tracked(object())
+    )
+    monkeypatch.setattr(
+        perplexity.GPT2LMHeadModel, "from_pretrained", tracked(_FakeModel())
+    )
+
+    loaders = [
+        classifier_tmr._load_model,
+        classifier_fakespot._load_model,
+        perplexity._load_model,
+    ]
+    with ThreadPoolExecutor(max_workers=3) as ex:
+        list(ex.map(lambda f: f(), loaders))
+    assert peak[0] == 1
+
+
+class _FakeModel:
+    def eval(self):
+        return self

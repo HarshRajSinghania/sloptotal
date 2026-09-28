@@ -8,6 +8,13 @@ from typing import Any, Callable
 
 log = logging.getLogger("sloptotal.model_pool")
 
+# Every from_pretrained() call in the process must hold this lock. transformers
+# loading is not thread-safe across models: two loads running at once (the
+# startup preloader and a first request, say) can leave GPT-2's tied lm_head
+# randomly initialised, which showed up as DistilGPT-2 perplexities of 50257
+# and 1e15 and pinned Binoculars at 1.0. Reentrant so a loader may call another.
+LOAD_LOCK = threading.RLock()
+
 
 class ModelPool:
     """A fixed-size pool of (model, tokenizer) pairs backed by queue.Queue.
@@ -35,7 +42,8 @@ class ModelPool:
     def _load_all(self) -> None:
         for i in range(self._pool_size):
             try:
-                replica = self._load_fn()
+                with LOAD_LOCK:
+                    replica = self._load_fn()
                 self._pool.put_nowait(replica)
                 log.info(
                     f"ModelPool[{self._name}] replica {i + 1}/{self._pool_size} loaded"
