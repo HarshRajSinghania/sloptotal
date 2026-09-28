@@ -21,13 +21,11 @@ document.addEventListener("DOMContentLoaded", () => {
             if (input) input.focus();
 
             // Clear inactive inputs
-            if (tab.dataset.tab === "url-tab") {
-                const ti = document.getElementById("text-input");
-                if (ti) ti.value = "";
-            } else {
-                const ui = document.getElementById("url-input");
-                if (ui) ui.value = "";
-            }
+            ["url-tab", "text-tab", "site-tab"].forEach(function(id) {
+                if (id === tab.dataset.tab) return;
+                var field = document.getElementById(id).querySelector("input:not([type=file]), textarea");
+                if (field) field.value = "";
+            });
         });
     });
 
@@ -38,6 +36,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (form) {
         form.addEventListener("submit", function(e) {
             e.preventDefault();
+
+            const siteTab = document.getElementById("site-tab");
+            if (siteTab && siteTab.classList.contains("active")) {
+                runSiteCheck(document.getElementById("site-input").value.trim());
+                return;
+            }
 
             const btn = document.getElementById("submit-btn");
             btn.disabled = true;
@@ -88,6 +92,68 @@ document.addEventListener("DOMContentLoaded", () => {
                 resetButton();
             });
         });
+    }
+
+    function runSiteCheck(url) {
+        if (!url) { showFormError("Enter a website to check."); return; }
+        var btn = document.getElementById("submit-btn");
+        btn.disabled = true;
+        btn.querySelector(".btn-text").style.display = "none";
+        btn.querySelector(".btn-loading").style.display = "inline-flex";
+        var existing = document.querySelector(".error-banner");
+        if (existing) existing.remove();
+        fetch("/api/scan/site", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({url: url})
+        })
+            .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, d: d}; }); })
+            .then(function(res) {
+                if (!res.ok) { showFormError(res.d.error || "Could not check that site."); return; }
+                renderSiteResult(res.d);
+            })
+            .catch(function() { showFormError("Could not reach the server. Is it running?"); })
+            .finally(resetButton);
+    }
+
+    function renderSiteResult(d) {
+        var box = document.getElementById("site-result");
+        var s = d.site;
+        box.classList.toggle("site-found", s.builders.length > 0);
+        box.querySelector("#site-result-host").textContent = new URL(d.final_url).hostname;
+        box.querySelector(".site-verdict").textContent = s.verdict;
+        var list = box.querySelector(".site-evidence");
+        list.innerHTML = "";
+        s.builders.forEach(function(b) {
+            b.evidence.forEach(function(ev) {
+                var li = document.createElement("li");
+                li.textContent = b.name + ": " + ev;
+                list.appendChild(li);
+            });
+        });
+        if (s.generator) {
+            var li = document.createElement("li");
+            li.textContent = "Generator tag: " + s.generator;
+            list.appendChild(li);
+        }
+        var t = box.querySelector(".site-text");
+        var full = box.querySelector(".site-full");
+        if (d.text) {
+            var words = {clean: "reads as human-written", mixed: "shows mixed signals", ai: "reads as AI-generated"};
+            t.textContent = "Page copy (" + d.text.word_count + " words) " + (words[d.text.verdict] || "was scored")
+                + " on the quick 4-engine scan.";
+            full.hidden = false;
+            full.onclick = function() {
+                document.getElementById("tab-url").click();
+                document.getElementById("url-input").value = d.final_url;
+                document.getElementById("analyze-form").requestSubmit();
+            };
+        } else {
+            t.textContent = "The page has too little server-rendered text to score its copy.";
+            full.hidden = true;
+        }
+        box.hidden = false;
+        box.scrollIntoView({behavior: "smooth", block: "nearest"});
     }
 
     function resetButton() {

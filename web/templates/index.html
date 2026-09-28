@@ -53,6 +53,10 @@
             <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M3 4h10M3 7h10M3 10h7M3 13h4" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
             Text
         </button>
+        <button class="tab" data-tab="site-tab" role="tab" aria-selected="false" aria-controls="site-tab" id="tab-site">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><rect x="2" y="3" width="12" height="10" rx="1.5" stroke="currentColor" stroke-width="1.4"/><path d="M2 6h12M5.5 9.5l-1 1 1 1M10.5 9.5l1 1-1 1" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Site check
+        </button>
         <div class="tab-indicator"></div>
     </div>
 
@@ -75,6 +79,12 @@
                 <span class="upload-status" id="upload-status">PDF, Word (.docx) or plain text</span>
             </div>
         </div>
+        <div id="site-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-site">
+            <label for="site-input" class="sr-only">Website to check</label>
+            <input type="text" id="site-input" placeholder="example.com"
+                   autocomplete="off" inputmode="url" />
+            <p class="site-tab-hint">Was it built with Lovable, v0, Bolt, Base44 or Replit? Checks the markers those builders leave, and scores the page copy if it has any.</p>
+        </div>
         <div class="form-bottom">
             <button type="submit" id="submit-btn">
                 <span class="btn-text">
@@ -90,6 +100,15 @@
         </div>
     </form>
 </div>
+
+<section class="site-check site-check--home" id="site-result" aria-live="polite" hidden>
+    <h2 class="site-label" id="site-result-host"></h2>
+    <p class="site-verdict"></p>
+    <ul class="site-evidence"></ul>
+    <p class="site-text"></p>
+    <button type="button" class="btn btn-ghost site-full" hidden>Run the full 23-engine report on this page &rarr;</button>
+    <p class="site-note">Evidence, not a probability: no marker does not mean the code was written by hand.</p>
+</section>
 
 <section class="engines-section" aria-labelledby="engines-heading">
     <div class="section-header">
