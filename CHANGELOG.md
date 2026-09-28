@@ -6,8 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-09-28
+
 ### Added
-- `TODO.md` roadmap for Qwen and Gemma detection engines
+- **Site check**: detects websites built with AI app builders (Lovable, v0,
+  Bolt, Base44, Replit, Same) from fingerprints verified on live deployments.
+  New home-page tab, a card on URL reports, and `POST /api/scan/site`.
+- **Document upload**: `.pdf`, `.docx`, `.txt` and `.md` on the Text tab and
+  `POST /api/extract`.
+- Unit test suite (seconds, no model downloads) and `scripts/smoke_test.py`,
+  an end-to-end check of every route and all 23 engines.
+- `tests/eval/candidate_models.py` to measure new Hugging Face detectors.
+- `SLOPTOTAL_API` for `tests/eval/run_any.py`, to re-measure a local instance.
+- `AGENTS.md`, a brief for contributors and AI coding assistants.
+- Semver Docker image tags on releases; Dependabot.
+
+### Fixed
+- Requests arriving while models were still loading could get a model without
+  its tokenizer and score 0.0 on four classifiers (a "Clean" verdict).
+- Concurrent model loads could leave GPT-2's output head randomly initialised,
+  pinning Binoculars at 1.0. All loads now share one lock.
+- URL scans could be pointed at private, loopback or cloud-metadata addresses.
+- The report page coloured scores with hardcoded bands that disagreed with the
+  verdict text.
+- CI was red on a lint error; its test job had never run a test.
+
+### Changed
+- Web dependencies upgraded (FastAPI 0.141, Starlette 1.7, pydantic 2.13,
+  httpx 0.28, trafilatura 2.2). transformers is capped below 6; 5.x reproduces
+  every engine score exactly.
+- Scripts moved from the repo root and `tests/` to `benchmarks/`.
+- The stale `frontend/` and `extension/` copies were removed (the site and the
+  extension have their own repositories).
+
+## [1.0.1] - 2026-07-03
+
+### Added
 - Cache invalidation for reports with engine load failures
 - Startup purge of stale cached reports
 
@@ -19,12 +53,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Neural engine load failures caused by outdated `tokenizers` (<0.19)
 - Stale cached reports serving pre-fix "Model loading failed" results
 
-## [1.0.0] - 2025
+## [1.0.0] - 2026-03-21
 
 ### Added
 - 23 AI detection engines (9 neural, 7 statistical, 7 linguistic)
 - FastAPI backend with SSE streaming
-- Calibrated scoring with Fakespot-dominant weighting
+- Calibrated ensemble scoring
 - Hardware-aware autoconfig (lite/standard/performance profiles)
 - Queue management with backpressure
 - Content hash caching

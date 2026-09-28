@@ -237,3 +237,38 @@ source of truth.
 - TMR and BERT-tiny RAID remain RAID-trained and evaluated on RAID; their
   contribution is damped 0.65× but a non-RAID corpus would measure them honestly.
 - Adversarially perturbed AI text (`attack != 'none'`) is still untested.
+
+---
+
+# Re-measurement — 2026-09-28
+
+## transformers 5.x reproduces every engine score
+
+`transformers>=4.46` had no upper bound, so fresh installs had moved to 5.17.
+The 26-passage Gutenberg corpus (`build_classics.py`, rebuilt byte-identical)
+was run through a local instance on transformers 5.17 / torch 2.14 and compared
+with the July results engine by engine: 21 of 23 engines match to three
+decimals. The two that differ are explained by July changes (Burstiness was
+renamed; SuperAnnotate was returning a flat ~0.46 before its loading fix). All
+26 passages are "Clean", max overall 24.5. `requirements.txt` now caps
+transformers below 6 rather than pinning it.
+
+## Two startup races that produced wrong scores
+
+Both were found by running the corpus against a server that was still loading
+models, which is what production does after every deploy.
+
+1. **Half-loaded models.** Lazy loaders assigned model and tokenizer without a
+   lock; a request arriving mid-load got a model with no tokenizer, four
+   classifiers scored 0.0 and the first Austen passage came back 0.0 instead
+   of 7.3.
+2. **Corrupted models.** transformers' `from_pretrained` is not thread-safe
+   across models. With the preloader and a request loading at once,
+   DistilGPT-2 came up with a randomly initialised output head (perplexity
+   50257, the vocabulary size, i.e. uniform predictions), pinning Binoculars at
+   1.0 and moving the overall score by up to 1.7 points. Reproduced outside the
+   app by loading three models on three threads.
+
+After the fixes (double-checked loading, one process-wide `LOAD_LOCK`), three
+cold starts each hit with the corpus during warm-up reproduce the baseline
+exactly.

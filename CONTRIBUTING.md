@@ -19,14 +19,11 @@ Adding new AI detection engines is the most impactful contribution. See [How to 
 ### Other Contributions
 
 - Performance optimizations
-- Frontend improvements
-- Chrome extension features
+- Web UI improvements
 - CI/CD and infrastructure
 - Security hardening
 
 ## Development Setup
-
-### Backend
 
 **Requires Python 3.10+** (3.11 recommended).
 
@@ -34,57 +31,53 @@ Adding new AI detection engines is the most impactful contribution. See [How to 
 git clone https://github.com/pablocaeg/sloptotal.git
 cd sloptotal
 python3.11 -m venv venv && source venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
+pip install -r requirements-dev.txt
 
-# Start with auto-reload
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app.main:app --port 8000 --reload
 ```
 
-Models (~2 GB) download automatically on first run. Use `SLOPTOTAL_PROFILE=lite` for low-resource machines, or `SLOPTOTAL_PROFILE=performance` with extra workers on high-RAM CPU servers (see README).
+Models (~2 GB) download on first run. Use `SLOPTOTAL_PROFILE=lite` on small
+machines. The web UI lives in `web/` (Jinja2 templates and vanilla JS, no build
+step). The Chrome extension has its own repository:
+[pablocaeg/sloptotal-extension](https://github.com/pablocaeg/sloptotal-extension).
 
-### Frontend
+### Tests
 
 ```bash
-cd frontend
-npm install
-npm run dev
+pytest -q                        # unit tests: seconds, no model downloads
+ruff check app tests scripts
+ruff format --check app tests scripts
+python scripts/smoke_test.py     # end to end, against a running server
 ```
 
-The frontend runs on Astro + Preact and deploys to Cloudflare Pages.
+The smoke test hits every route with real inference and fails if any engine
+reports a load error. Run it after touching engines, dependencies or the
+Dockerfile.
 
-### Chrome Extension
+### Measuring accuracy
 
-Load `extension/` as an unpacked extension in Chrome (`chrome://extensions` > Developer mode > Load unpacked). It connects to `localhost:8000` by default.
-
-### Running Tests
+`tests/eval/` holds the corpus builders and the harness behind every number in
+the README. Build the corpora, run them against your instance, and compare:
 
 ```bash
-# Unit tests
-pytest tests/ -x -v -k "not slow"
-
-# Evaluation benchmarks (requires models loaded)
-python tests/eval_dataset.py
-python tests/eval_hard.py
+cd tests/eval
+python build_classics.py            # 26 pre-1920 passages (human by construction)
+python build_multidomain.py         # RAID news / books / poetry / abstracts
+SLOPTOTAL_API=http://localhost:8000/api/analyze python run_any.py corpus_classics.json results.json
 ```
 
-### Linting
-
-```bash
-pip install ruff
-ruff check app/
-ruff format --check app/
-```
+Any change to an engine, a weight or the calibration needs before/after numbers
+on both corpora in the PR. `tests/eval/candidate_models.py` scores new Hugging
+Face detectors on their own, to decide whether they are worth adding.
 
 ## How to Add a New Engine
 
 1. **Create** `app/engines/your_engine.py` inheriting from `BaseEngine` (`app/engines/base.py`)
 2. **Implement** `name`, `description`, `code`, `engine_type`, and `analyze(text) -> EngineResult`
-3. **Register** in `app/analyzer.py` by adding to the `_engines` list
-4. **Add weight** to `ENGINE_WEIGHTS` in `app/config.py` (all weights must sum to 1.0)
-5. **Add metadata** to `frontend/src/lib/engines.ts`
-6. **Preload** in `app/main.py` `_preload_models()` if it loads ML models
-7. **Run evaluation**: `python tests/eval_dataset.py`
+3. **Register** it in `_engines` in `app/analyzer.py`
+4. **Weight** it in `ENGINE_WEIGHTS` in `app/config.py` (weights must sum to 1.0)
+5. **Load models under `model_pool.LOAD_LOCK`** and add the loader to `_preload_models()` in `app/main.py`
+6. **Measure** it on both corpora and include AUC and literary bias in the PR
 
 See existing engines for reference:
 - Neural: `app/engines/classifier_fakespot.py`
@@ -111,26 +104,20 @@ docs: update API endpoint documentation
 ## Architecture Overview
 
 ```
-app/           Python/FastAPI backend with 23 detection engines
-frontend/      Astro + Preact frontend (Cloudflare Pages)
-web/           Legacy Jinja2 frontend (served by backend directly)
-extension/     Chrome Extension (Manifest V3)
-tests/         Evaluation benchmarks and unit tests
-docs/          Architecture docs and AI agent documentation
-.claude/       AI agents for autonomous contribution (works with any AI tool)
+app/           FastAPI backend: 23 engines, ensemble, site fingerprints, API
+web/           Web UI served by the backend (Jinja2 + vanilla JS)
+tests/         Unit tests; tests/eval/ holds the accuracy harness
+scripts/       End-to-end smoke test and model drift check
+benchmarks/    Speed and load scripts
 ```
 
-For detailed architecture, see [docs/ARCHITECTURE_NEXT.md](docs/ARCHITECTURE_NEXT.md).
-
-## AI Agents
-
-This project includes 11 AI agents that can help you contribute. They work with any AI coding assistant — just load the agent prompt from `.claude/agents/` into your tool of choice. See [docs/ai-agents/](docs/ai-agents/) for details.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for internals and [AGENTS.md](AGENTS.md)
+for the short list of rules that are easy to break.
 
 ## Code Style
 
-- **Python**: Type hints, absolute imports (`from app.`), logging via `logging.getLogger("sloptotal.*")`
-- **Frontend**: Preact (not React), CSS custom properties from `global.css`
-- **Extension**: Vanilla JS, zero dependencies, console.log with `[BG]`/`[G]` prefixes
+- **Python**: type hints, absolute imports (`from app.`), logging via `logging.getLogger("sloptotal.*")`, formatted with ruff
+- **Web UI**: vanilla JS and CSS custom properties from `style.css`; no frameworks or build step
 
 ## Important Rules
 
@@ -138,4 +125,5 @@ This project includes 11 AI agents that can help you contribute. They work with 
 - ENGINE_WEIGHTS must always sum to 1.0.
 - Do NOT change engine `analyze()` signatures.
 - Do NOT modify scoring calibration without running full evaluation.
+- Do NOT call `from_pretrained()` outside `model_pool.LOAD_LOCK`.
 - Do NOT commit secrets, database files, or model weights.
