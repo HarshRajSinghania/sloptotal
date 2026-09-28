@@ -7,7 +7,9 @@ aiosqlite==0.22.1
 pydantic==2.13.5
 psutil==7.2.2
 
-# URL scanning
+# Documents and URL scanning
+pypdf==6.19.0
+python-docx==1.2.0
 httpx==0.28.1
 trafilatura==2.2.0
 beautifulsoup4==4.15.0

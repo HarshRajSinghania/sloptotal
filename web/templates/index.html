@@ -66,6 +66,14 @@
             <label for="text-input" class="sr-only">Text to analyse</label>
             <textarea name="text" id="text-input" rows="6"
                       placeholder="Paste the text you want to analyse..."></textarea>
+            <div class="upload-row">
+                <label class="upload-btn" for="file-input">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 11V3M4.5 6.5L8 3l3.5 3.5M3 13h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Upload a file
+                </label>
+                <input type="file" id="file-input" accept=".pdf,.docx,.txt,.md" class="sr-only" />
+                <span class="upload-status" id="upload-status">PDF, Word (.docx) or plain text</span>
+            </div>
         </div>
         <div class="form-bottom">
             <button type="submit" id="submit-btn">
@@ -78,7 +86,7 @@
                     Submitting&hellip;
                 </span>
             </button>
-            <span class="form-hint">Free &amp; private. All analysis runs locally on our servers.</span>
+            <span class="form-hint">Free &amp; private. Every engine runs on this server; nothing is sent to third parties.</span>
         </div>
     </form>
 </div>

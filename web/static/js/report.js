@@ -5,13 +5,19 @@
     var reportId = container.dataset.reportId;
     var totalEngines = parseInt(container.dataset.enginesTotal, 10);
     var completed = 0;
+    // Verdict band edges come from app/config.py via the template, so colours
+    // always agree with the verdict text the server computed.
+    var bands = (container.dataset.bands || "30,45,55,80").split(",").map(Number);
+
+    function bandIndex(score) {
+        for (var i = 0; i < bands.length; i++) {
+            if (score <= bands[i]) return i;
+        }
+        return bands.length;
+    }
 
     function getScoreColor(score) {
-        if (score <= 20) return "var(--c-clean)";
-        if (score <= 40) return "var(--c-low)";
-        if (score <= 60) return "var(--c-warn)";
-        if (score <= 80) return "var(--c-danger)";
-        return "var(--c-slop)";
+        return ["var(--c-clean)", "var(--c-low)", "var(--c-warn)", "var(--c-danger)", "var(--c-slop)"][bandIndex(score)];
     }
 
     function getBarColor(score) {
@@ -21,11 +27,7 @@
     }
 
     function getVerdictClass(score) {
-        if (score <= 20) return "verdict-clean";
-        if (score <= 40) return "verdict-low";
-        if (score <= 60) return "verdict-suspicious";
-        if (score <= 80) return "verdict-likely";
-        return "verdict-slop";
+        return ["verdict-clean", "verdict-low", "verdict-suspicious", "verdict-likely", "verdict-slop"][bandIndex(score)];
     }
 
     function updateGauge(overall) {
@@ -126,4 +128,38 @@
             orig.textContent = oldText;
         }, 2000);
     });
+
+    // ---- Site fingerprints (URL reports only) ----
+    var siteCard = document.getElementById("site-check");
+    if (siteCard) {
+        fetch("/api/scan/site", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({url: siteCard.dataset.url, include_text: false})
+        })
+            .then(function(r) { return r.ok ? r.json() : null; })
+            .then(function(d) {
+                if (!d || !d.site) return;
+                var s = d.site;
+                var title = siteCard.querySelector(".site-verdict");
+                title.textContent = s.verdict;
+                siteCard.classList.toggle("site-found", s.builders.length > 0);
+                var list = siteCard.querySelector(".site-evidence");
+                list.innerHTML = "";
+                s.builders.forEach(function(b) {
+                    b.evidence.forEach(function(ev) {
+                        var li = document.createElement("li");
+                        li.textContent = b.name + ": " + ev;
+                        list.appendChild(li);
+                    });
+                });
+                if (s.generator) {
+                    var li = document.createElement("li");
+                    li.textContent = "Generator tag: " + s.generator;
+                    list.appendChild(li);
+                }
+                siteCard.hidden = false;
+            })
+            .catch(function() {});
+    }
 })();

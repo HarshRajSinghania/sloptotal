@@ -1,11 +1,12 @@
 import asyncio
 import logging
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.schemas import (
     AnalyzeRequest,
+    SiteScanRequest,
     SnippetBatchRequest,
     BatchUrlRequest,
     UrlScanRequest,
@@ -26,7 +27,14 @@ from app.analyzer import (
     _analyze_text_inner,
 )
 from app.database import get_scan_stats, log_scan_sync
-from app.scraper import extract_text_from_url, extract_text_with_metadata
+from app.scraper import (
+    _extract_text_from_html,
+    extract_text_from_url,
+    extract_text_with_metadata,
+    fetch_page,
+)
+from app.site_fingerprints import detect_builders
+from app.documents import MAX_UPLOAD_BYTES, extract_document_text
 from app.page_classifier import classify_page_type
 
 log = logging.getLogger("sloptotal.routes.api")
@@ -464,6 +472,57 @@ async def api_analyze(request: Request, req: AnalyzeRequest):
     except Exception as e:
         log.error(f"API analyze failed: {e}", exc_info=True)
         return JSONResponse({"error": "Analysis failed"}, status_code=500)
+
+
+@router.post("/extract")
+async def api_extract(file: UploadFile = File(...)):
+    """Extract text from an uploaded .pdf, .docx, .txt or .md file.
+
+    Returns {"text", "filename", "word_count"}; nothing is stored. Submit the
+    text to /api/analyze (or the web form) to scan it.
+    """
+    data = await file.read(MAX_UPLOAD_BYTES + 1)
+    try:
+        text = await asyncio.to_thread(extract_document_text, file.filename, data)
+    except ValueError as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+    return {"text": text, "filename": file.filename, "word_count": len(text.split())}
+
+
+@router.post("/scan/site")
+async def api_scan_site(req: SiteScanRequest):
+    """Was this website built with an AI app builder, and does its copy read as AI?
+
+    Two independent answers: `site` lists builder fingerprints found in the
+    HTML, headers and hostname (Lovable, v0, Bolt, ...), with the evidence for
+    each; `text` is the quick score of the page's main text, or null when the
+    page has too little prose to judge.
+    """
+    url = (req.url or "").strip()
+    if not url:
+        return JSONResponse({"error": "Provide a 'url' field."}, status_code=400)
+    if "://" not in url:
+        url = "https://" + url
+    try:
+        html, headers, final_url = await fetch_page(url)
+    except ValueError as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+    except Exception as e:
+        log.info(f"Site scan fetch failed for {url}: {e}")
+        return JSONResponse({"error": "Could not fetch that URL."}, status_code=502)
+
+    site = detect_builders(html, final_url, headers)
+    text_result = None
+    try:
+        if not req.include_text:
+            raise ValueError("text scoring not requested")
+        text = _extract_text_from_html(html)
+        text_result = await quick_analyze_text(text)
+        text_result["word_count"] = len(text.split())
+    except ValueError:
+        pass  # app shells and landing pages often have no prose to score
+
+    return {"url": url, "final_url": final_url, "site": site, "text": text_result}
 
 
 @router.get("/recent")

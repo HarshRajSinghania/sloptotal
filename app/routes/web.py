@@ -5,6 +5,7 @@ from fastapi import APIRouter, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from starlette.responses import StreamingResponse
 
+from app.config import SCORE_CLEAN, SCORE_LIKELY_AI, SCORE_LOW_RISK, SCORE_SUSPICIOUS
 from app.schemas import WebAnalyzeRequest
 from app.analyzer import (
     start_analysis,
@@ -194,6 +195,7 @@ async def report_page(request: Request, report_id: str):
         {
             "report": report,
             "engines": engines,
+            "bands": [SCORE_CLEAN, SCORE_LOW_RISK, SCORE_SUSPICIOUS, SCORE_LIKELY_AI],
         },
     )
 

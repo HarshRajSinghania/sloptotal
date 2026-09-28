@@ -127,6 +127,14 @@ def main() -> int:
     )
     check("POST /api/scan/snippets", r.status_code == 200, f"{len(r.text)} bytes")
 
+    r = c.post(
+        "/api/extract", files={"file": ("essay.txt", AI_TEXT.encode(), "text/plain")}
+    )
+    check(
+        "POST /api/extract (upload)",
+        r.status_code == 200 and r.json()["text"] == AI_TEXT,
+    )
+
     r = c.get("/api/queue/status")
     check("GET /api/queue/status", r.status_code == 200)
 
@@ -142,13 +150,13 @@ def main() -> int:
         for line in s.iter_lines():
             if line.startswith("data: "):
                 ev = json.loads(line[6:])
-                events.append(ev)
-                if ev.get("engines_done") == ev.get("engines_total") == 23:
+                if ev.get("done"):
                     break
+                events.append(ev)
     bad = engine_failures(events)
     check(
         "GET /api/stream/{id} streams all engines",
-        len({e.get("key") or e.get("engine_name") for e in events}) >= 23 and not bad,
+        len({e.get("key") or e.get("engine_name") for e in events}) == 23 and not bad,
         f"{len(events)} events" + (f", FAILED: {bad}" if bad else ""),
     )
 
@@ -166,6 +174,15 @@ def main() -> int:
         )
         r = c.post("/api/scan/urls", json={"urls": [{"id": "1", "url": URL}]})
         check("POST /api/scan/urls", r.status_code == 200, f"{len(r.text)} bytes")
+        r = c.post("/api/scan/site", json={"url": URL})
+        site = r.json()
+        check(
+            "POST /api/scan/site",
+            r.status_code == 200 and site["site"]["builders"] == [] and site["text"],
+            f"{site.get('site', {}).get('verdict')!r}, text {site.get('text', {}).get('score')}",
+        )
+        r = c.post("/api/scan/site", json={"url": "http://169.254.169.254/"})
+        check("URL scans refuse private addresses", r.status_code == 400)
 
     print(f"\n{'OK' if not failures else 'FAILED'}: {len(failures)} failure(s)")
     return 1 if failures else 0

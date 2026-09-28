@@ -304,3 +304,28 @@ document.addEventListener("DOMContentLoaded", () => {
         gaugeNumber.style.color = color;
     }
 });
+
+// ---- File upload: extract text server-side, then analyse it like pasted text ----
+(function() {
+    var input = document.getElementById("file-input");
+    if (!input) return;
+    var status = document.getElementById("upload-status");
+    var textarea = document.getElementById("text-input");
+    input.addEventListener("change", function() {
+        var file = input.files && input.files[0];
+        if (!file) return;
+        status.textContent = "Reading " + file.name + "\u2026";
+        var body = new FormData();
+        body.append("file", file);
+        fetch("/api/extract", {method: "POST", body: body})
+            .then(function(r) { return r.json().then(function(d) { return {ok: r.ok, d: d}; }); })
+            .then(function(res) {
+                if (!res.ok) { status.textContent = res.d.error || "Could not read that file."; return; }
+                textarea.value = res.d.text;
+                status.textContent = file.name + " \u00b7 " + res.d.word_count + " words";
+                textarea.dispatchEvent(new Event("input"));
+            })
+            .catch(function() { status.textContent = "Upload failed. Try again."; })
+            .finally(function() { input.value = ""; });
+    });
+})();

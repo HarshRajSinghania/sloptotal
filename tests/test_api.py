@@ -58,3 +58,28 @@ def test_health(client):
     r = client.get("/health")
     assert r.status_code == 200
     assert r.json()["engines"] == 23
+
+
+def test_site_scan_requires_url(client):
+    assert client.post("/api/scan/site", json={}).status_code == 400
+
+
+def test_url_scans_refuse_private_addresses(client):
+    r = client.post("/api/scan/site", json={"url": "http://127.0.0.1:8000/health"})
+    assert r.status_code == 400
+    assert "private" in r.json()["error"]
+
+
+def test_extract_endpoint(client):
+    from tests.samples import AI_TEXT
+
+    r = client.post(
+        "/api/extract", files={"file": ("essay.txt", AI_TEXT.encode(), "text/plain")}
+    )
+    assert r.status_code == 200
+    assert r.json()["word_count"] == len(AI_TEXT.split())
+    r = client.post(
+        "/api/extract",
+        files={"file": ("x.exe", b"MZ" * 50, "application/octet-stream")},
+    )
+    assert r.status_code == 400
