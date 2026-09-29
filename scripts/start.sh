@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
 # SlopTotal — One-command local server launcher
-# Usage: ./start.sh
+# Usage: ./scripts/start.sh
 #
 # The server auto-detects your hardware (CPU cores, RAM, GPU)
 # and configures itself for optimal performance.
 #
 # Override any setting with environment variables:
-#   SLOPTOTAL_PROFILE=lite ./start.sh        # Force lite mode (low RAM)
-#   SLOPTOTAL_DEVICE=cpu ./start.sh          # Force CPU even if GPU available
-#   SLOPTOTAL_TORCH_THREADS=4 ./start.sh     # Override thread count
+#   SLOPTOTAL_PROFILE=lite ./scripts/start.sh        # Force lite mode (low RAM)
+#   SLOPTOTAL_DEVICE=cpu ./scripts/start.sh          # Force CPU even if GPU available
+#   SLOPTOTAL_TORCH_THREADS=4 ./scripts/start.sh     # Override thread count
 
 set -e
+cd "$(dirname "$0")/.."
 
 PORT="${SLOPTOTAL_PORT:-8000}"
 HOST="${SLOPTOTAL_HOST:-0.0.0.0}"

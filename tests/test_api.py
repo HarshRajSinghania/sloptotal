@@ -1,6 +1,6 @@
 """HTTP contract tests. The lifespan (model preload, queue workers) is not
 started, so only routes that do not run inference are exercised here; the
-full pipeline is covered by the end-to-end run described in CONTRIBUTING.md."""
+full pipeline is covered by the end-to-end run described in .github/CONTRIBUTING.md."""
 
 import asyncio
 

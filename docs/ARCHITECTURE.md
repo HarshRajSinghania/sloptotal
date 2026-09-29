@@ -36,7 +36,7 @@ FastAPI application with hardware-aware auto-configuration.
 - `app/database.py` -- SQLite async storage for reports
 - `app/cache.py` -- Content hash-based caching
 - `app/scraper.py` -- URL fetching (rejects private/metadata addresses on every redirect hop) and main-content extraction
-- `app/site_fingerprints.py` -- AI app builder detection (Lovable, v0, Bolt, Base44, Replit, Same); see [docs/SITE_FINGERPRINTS.md](docs/SITE_FINGERPRINTS.md)
+- `app/site_fingerprints.py` -- AI app builder detection (Lovable, v0, Bolt, Base44, Replit, Same); see [docs/SITE_FINGERPRINTS.md](SITE_FINGERPRINTS.md)
 - `app/documents.py` -- Text extraction from uploaded PDF / DOCX / TXT
 
 ### Web Frontend (`web/`)

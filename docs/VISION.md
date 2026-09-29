@@ -1,6 +1,6 @@
 # Vision
 
-Longer-term direction, kept separate from [TODO.md](../TODO.md) so the TODO
+Longer-term direction, kept separate from [TODO.md](TODO.md) so the TODO
 stays a list of concrete next steps. Nothing here is measured yet; anything
 that ships goes through `tests/eval/` first.
 

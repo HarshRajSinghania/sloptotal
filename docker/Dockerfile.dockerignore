@@ -8,6 +8,7 @@ tests
 benchmarks
 scripts
 .cursor
+docker/docker-compose.yml
 docs
 *.md
 !requirements.txt
@@ -24,3 +25,4 @@ venv/
 .DS_Store
 node_modules/
 requirements-dev.txt
+docker

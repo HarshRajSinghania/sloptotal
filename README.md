@@ -100,7 +100,7 @@ docker run -p 8000:8000 -v sloptotal-models:/app/models ghcr.io/pablocaeg/slopto
 
 Open <http://localhost:8000>. The first scan downloads about 2 GB of models into
 the `sloptotal-models` volume, so later starts are quick. To build from source
-instead, run `docker compose up`.
+instead, run `docker compose -f docker/docker-compose.yml up`.
 
 ### From source
 
@@ -111,7 +111,7 @@ git clone https://github.com/pablocaeg/sloptotal.git
 cd sloptotal
 python3.11 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-./start.sh            # or: uvicorn app.main:app --port 8000
+./scripts/start.sh    # or: uvicorn app.main:app --port 8000
 ```
 
 Check that every engine loads and scores, end to end:
@@ -267,7 +267,7 @@ export SLOPTOTAL_SNIPPET_WORKERS=6
 export SLOPTOTAL_MAX_CONCURRENT_FULL=4
 export SLOPTOTAL_POOL_FAKESPOT=2
 export SLOPTOTAL_POOL_TMR=2
-./start.sh
+./scripts/start.sh
 ```
 
 | Variable | Default | Purpose |
@@ -324,7 +324,7 @@ scripts/        smoke_test.py (end-to-end) and the model drift check
 benchmarks/     Speed and load scripts
 ```
 
-[ARCHITECTURE.md](ARCHITECTURE.md) covers the internals. [AGENTS.md](AGENTS.md)
+[ARCHITECTURE.md](docs/ARCHITECTURE.md) covers the internals. [AGENTS.md](AGENTS.md)
 is a short brief for contributors and AI coding assistants.
 
 ## Newer open detectors we measured
@@ -343,7 +343,7 @@ standalone, 180 RAID texts plus the 26 literary passages:
 RAID-trained models score near 1.0 on RAID by construction and need a different
 test set first. The full table, the models we excluded and why, and the raw
 scores are in [tests/eval/FINDINGS.md](tests/eval/FINDINGS.md#newer-open-detectors-measured-standalone).
-The roadmap is in [TODO.md](TODO.md).
+The roadmap is in [TODO.md](docs/TODO.md).
 
 ## Related projects and reading
 
@@ -357,7 +357,7 @@ The roadmap is in [TODO.md](TODO.md).
 ## Contributing
 
 Contributions are welcome, especially new engines with measurements. Start with
-[CONTRIBUTING.md](CONTRIBUTING.md).
+[CONTRIBUTING.md](.github/CONTRIBUTING.md).
 
 - [Report a bug](https://github.com/pablocaeg/sloptotal/issues/new?template=bug_report.yml)
 - [Request a feature](https://github.com/pablocaeg/sloptotal/issues/new?template=feature_request.yml)
@@ -368,4 +368,4 @@ If SlopTotal is useful to you, a star helps other people find it.
 ## License
 
 MIT. Model weights keep their own licenses; see
-[THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+[THIRD_PARTY_LICENSES.md](docs/THIRD_PARTY_LICENSES.md).

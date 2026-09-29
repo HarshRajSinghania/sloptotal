@@ -111,7 +111,7 @@ scripts/       End-to-end smoke test and model drift check
 benchmarks/    Speed and load scripts
 ```
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for internals and [AGENTS.md](AGENTS.md)
+See [ARCHITECTURE.md](../docs/ARCHITECTURE.md) for internals and [AGENTS.md](../AGENTS.md)
 for the short list of rules that are easy to break.
 
 ## Code Style

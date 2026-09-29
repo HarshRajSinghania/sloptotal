@@ -31,7 +31,8 @@ data/
 *.swo
 
 # Local assistant settings (project guidance lives in AGENTS.md)
-.claude/
+.claude/*
+!.claude/CLAUDE.md
 
 # Models cache (downloaded on first run)
 models/
