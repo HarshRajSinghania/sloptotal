@@ -7,6 +7,7 @@ from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 
 from app.schemas import (
+    FeedbackRequest,
     AnalyzeRequest,
     SiteScanRequest,
     SnippetBatchRequest,
@@ -28,7 +29,12 @@ from app.analyzer import (
     _scan_snippets_batch_inner,
     _analyze_text_inner,
 )
-from app.database import get_scan_stats, log_scan_sync
+from app.database import (
+    FeedbackNotReady,
+    get_scan_stats,
+    log_scan_sync,
+    save_report_feedback,
+)
 from app.scraper import (
     _extract_text_from_html,
     extract_text_from_url,
@@ -573,6 +579,21 @@ async def api_report(report_id: str):
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     return report.model_dump()
+
+
+@router.post("/report/{report_id}/feedback")
+async def api_report_feedback(report_id: str, req: FeedbackRequest):
+    if not report_id or len(report_id) > 12 or not report_id.isalnum():
+        raise HTTPException(status_code=400, detail="Invalid report ID")
+    try:
+        saved = await save_report_feedback(report_id, req.label)
+    except FeedbackNotReady:
+        raise HTTPException(
+            status_code=409, detail="The report is still being analysed"
+        )
+    if not saved:
+        raise HTTPException(status_code=404, detail="Report not found")
+    return {"status": "saved"}
 
 
 @router.get("/scan/stats")

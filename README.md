@@ -164,6 +164,7 @@ curl -X POST http://localhost:8000/api/scan/site \
 | `/api/scan/urls` | POST | Batch of 1-10 URLs, page-type aware | 1-5 s |
 | `/api/engines` | GET | Engine metadata | instant |
 | `/api/report/{id}` | GET | A stored report | instant |
+| `/api/report/{id}/feedback` | POST | Record who actually wrote the text: `{"label": "human" \| "ai" \| "mixed" \| "unsure"}` | instant |
 | `/api/queue/status` | GET | Queue capacity | instant |
 
 ```bash
