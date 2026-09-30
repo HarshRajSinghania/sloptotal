@@ -1,8 +1,8 @@
 # SlopTotal: Architectural Investigation & Next Steps
 
 **Date**: February 2026
-**Status**: Active investigation — decisions documented for implementation
-**Companion doc**: `docs/INVESTIGATIONS.md` (benchmark data, scoring evolution)
+**Status**: Historical. Written when the extension lived in this repo; current internals are in [ARCHITECTURE.md](../ARCHITECTURE.md)
+**Companion doc**: [INVESTIGATIONS.md](INVESTIGATIONS.md) (benchmark data, scoring evolution)
 
 ---
 

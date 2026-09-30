@@ -362,6 +362,7 @@ Contributions are welcome, especially new engines with measurements. Start with
 - [Report a bug](https://github.com/pablocaeg/sloptotal/issues/new?template=bug_report.yml)
 - [Request a feature](https://github.com/pablocaeg/sloptotal/issues/new?template=feature_request.yml)
 - [Propose a new engine](https://github.com/pablocaeg/sloptotal/issues/new?template=new_engine.yml)
+- [Ask a question or share results](https://github.com/pablocaeg/sloptotal/discussions)
 
 If SlopTotal is useful to you, a star helps other people find it.
 

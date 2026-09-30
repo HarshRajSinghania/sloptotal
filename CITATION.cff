@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: If you use SlopTotal or its evaluation results, please cite it as below.
+title: "SlopTotal: an ensemble of open AI-generated text detectors with a published evaluation"
+type: software
+authors:
+  - family-names: Carrasco Egea
+    given-names: Pablo
+repository-code: https://github.com/pablocaeg/sloptotal
+url: https://sloptotal.com
+license: MIT
+version: 1.1.0
+date-released: 2026-09-28
+keywords:
+  - ai-text-detection
+  - ai-generated-content
+  - ensemble
+  - evaluation
