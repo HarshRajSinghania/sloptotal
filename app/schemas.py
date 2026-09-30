@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from enum import Enum
-from typing import Optional
+from typing import Literal, Optional
 from datetime import datetime
 
 
@@ -16,6 +16,10 @@ class EngineResult(BaseModel):
     verdict: Verdict
     details: str
     description: str = ""
+
+
+class FeedbackRequest(BaseModel):
+    label: Literal["human", "ai", "mixed", "unsure"]
 
 
 class AnalyzeRequest(BaseModel):
