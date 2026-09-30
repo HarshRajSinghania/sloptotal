@@ -11,6 +11,7 @@ from app.config import SCORE_CLEAN, SCORE_LIKELY_AI, SCORE_LOW_RISK, SCORE_SUSPI
 from app.schemas import WebAnalyzeRequest
 from app.analyzer import (
     start_analysis,
+    wait_until_done,
     get_report,
     stream_results,
     get_engine_list,
@@ -137,13 +138,15 @@ async def api_web_analyze(request: Request, req: WebAnalyzeRequest):
         text_hash = compute_text_hash(content)
 
         async def _execute(payload):
-            rid, _cached = await start_analysis(
+            rid, cached = await start_analysis(
                 payload["text"],
                 source_type=payload["source_type"],
                 source=payload["source"],
                 _queue_managed=True,
             )
-            return {"report_id": rid}
+            if cached:
+                return {"report_id": rid}
+            return {"report_id": rid, "_hold": wait_until_done(rid)}
 
         resp = await queue_manager.submit(
             "full",
