@@ -1,6 +1,8 @@
 import json
 import logging
 
+import httpx
+
 from fastapi import APIRouter, Request, Form, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from starlette.responses import StreamingResponse
@@ -172,6 +174,9 @@ async def api_web_analyze(request: Request, req: WebAnalyzeRequest):
         if "busy" in str(e).lower():
             return JSONResponse({"error": str(e), "retry_after": 2}, status_code=429)
         return JSONResponse({"error": str(e)}, status_code=400)
+    except httpx.HTTPError as e:
+        log.info(f"Web analyze could not fetch {req.url}: {e!r}")
+        return JSONResponse({"error": "Could not fetch that URL."}, status_code=502)
     except Exception as e:
         log.error(f"Web analyze failed: {e}", exc_info=True)
         return JSONResponse(

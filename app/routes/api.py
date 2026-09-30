@@ -1,6 +1,8 @@
 import asyncio
 import logging
 
+import httpx
+
 from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse
 
@@ -469,6 +471,9 @@ async def api_analyze(request: Request, req: AnalyzeRequest):
         if "busy" in str(e).lower():
             return JSONResponse({"error": str(e), "retry_after": 2}, status_code=429)
         return JSONResponse({"error": str(e)}, status_code=400)
+    except httpx.HTTPError as e:
+        log.info(f"API analyze could not fetch {req.url}: {e!r}")
+        return JSONResponse({"error": "Could not fetch that URL."}, status_code=502)
     except Exception as e:
         log.error(f"API analyze failed: {e}", exc_info=True)
         return JSONResponse({"error": "Analysis failed"}, status_code=500)
