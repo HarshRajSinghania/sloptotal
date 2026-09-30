@@ -3,7 +3,7 @@
 **Research Investigations Document**
 **Project**: SlopTotal -- Open-Source AI Content Detection
 **Date**: February 2026
-**Status**: Active research, findings documented for open-source paper
+**Status**: Historical. Superseded by [tests/eval/FINDINGS.md](../../tests/eval/FINDINGS.md), which holds the current measurements
 
 ---
 

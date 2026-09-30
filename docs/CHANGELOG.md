@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+- CI runs the unit tests on Python 3.10, 3.11, 3.12 and 3.13, the versions the
+  README supports.
+- The February 2026 research notes moved to `docs/research/`, marked as
+  historical; `docs/VISION.md` no longer implies the engines detect code.
+- Issue forms point questions and ideas to Discussions.
+
+### Added
+- `CITATION.cff`, so the repository can be cited.
+
 ## [1.1.0] - 2026-09-28
 
 ### Added
