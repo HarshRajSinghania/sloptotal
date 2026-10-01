@@ -1,0 +1,11 @@
+# Matches CI: ruff 0.16.9 on app, tests and scripts.
+# See https://github.com/astral-sh/ruff-pre-commit
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^(app|tests|scripts)/
+      - id: ruff-format
+        files: ^(app|tests|scripts)/
