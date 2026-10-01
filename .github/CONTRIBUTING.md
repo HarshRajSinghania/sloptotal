@@ -37,7 +37,7 @@ uvicorn app.main:app --port 8000 --reload
 ```
 
 Install git hooks so ruff runs on `app`, `tests` and `scripts` before you push:
-`pre-commit install`
+`pip install pre-commit && pre-commit install`
 
 Models (~2 GB) download on first run. Use `SLOPTOTAL_PROFILE=lite` on small
 machines. The web UI lives in `web/` (Jinja2 templates and vanilla JS, no build
