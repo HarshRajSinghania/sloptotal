@@ -38,7 +38,7 @@ it publishes how accurate that is, failures included.
 - **Text, URLs and documents.** Paste text, scan a web page (main content is
   extracted automatically), or upload `.pdf`, `.docx`, `.txt` or `.md`.
 - **Site check: was this website vibe-coded?** Finds the fingerprints that
-  Lovable, v0, Bolt, Base44, Replit and Same leave in the sites they deploy,
+  Lovable, v0, Bolt, Base44, Replit, Same and Emergent leave in the sites they deploy,
   and shows the evidence for each one. [How it works](#site-check-detect-sites-built-with-ai-app-builders)
 - **Per-paragraph heat map** through the API, to see which parts read as AI.
 - **Measured, not claimed.** Every accuracy number below comes with the corpus,
@@ -135,6 +135,7 @@ sites or in the builders' own templates:
 | Base44 | `app.base44.com` platform calls, `base44_access_token`, `*.base44.app` |
 | Replit | Replit Agent dev banner, Replit badge, `*.replit.app` |
 | Same | assets served from `same-assets.com` |
+| Emergent | `__emg_sid` and `__emg_vid` cookies, `emergent-main.js` script, `*.emergent.host` |
 
 A site with no marker may still have been written with AI: code exported from
 these tools and hosted elsewhere, or written in an AI editor, carries no
