@@ -237,7 +237,8 @@ The overall score is a logistic model over the engine scores, fitted on
 [SlopBench](tests/eval/slopbench/). The fitted parameters are in
 [app/calibration.json](app/calibration.json), and every number in the fit's
 report, [tests/eval/slopbench/FINDINGS.md](tests/eval/slopbench/FINDINGS.md), is
-measured on kinds of writing the fit never saw.
+measured on kinds of writing the fit never saw. [docs/CALIBRATION.md](docs/CALIBRATION.md)
+explains each field in the JSON and how to regenerate it.
 
 1. **Weights from a fit, not by hand.** Each engine's score is turned into
    log-odds and weighted by the model, with weights kept non-negative. An engine
