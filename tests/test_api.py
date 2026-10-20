@@ -279,3 +279,51 @@ def test_health_does_not_show_the_database_path(client):
     r = client.get("/health")
     assert r.status_code == 200
     assert "database_path" not in r.json()["database"]
+
+
+def test_public_stats_endpoints_never_return_submitted_content(client):
+    """Public endpoints must never leak submitted text, URLs, or report IDs.
+
+    Regression for #157: /api/recent and /api/scan/stats are unauthenticated.
+    """
+    canary_text = "canary-text-1234"
+    canary_url = "https://example.com/canary-url-1234"
+    report_id = "canaryrpt1"
+
+    # Create a report with distinctive content
+    asyncio.run(
+        create_report(
+            report_id=report_id,
+            text_hash="hash",
+            source_type="text",
+            source=canary_url,
+            text_excerpt=canary_text,
+            word_count=2,
+            engines_total=23,
+        )
+    )
+
+    # Create a scan log entry
+    from app.database import log_scan_sync
+    log_scan_sync(
+        scan_type="quick",
+        text_excerpt=canary_text,
+        text_hash="hash",
+        chars=len(canary_text),
+        score=0.5,
+        indicator="mixed",
+        confidence="low",
+        bert=0.5,
+        e5=0.5,
+        tmr=0.5,
+        fakespot=0.5,
+        source_url=canary_url,
+    )
+
+    for path in ["/api/recent", "/api/scan/stats"]:
+        r = client.get(path)
+        assert r.status_code == 200
+        body = r.text
+        assert canary_text not in body
+        assert canary_url not in body
+        assert report_id not in body
